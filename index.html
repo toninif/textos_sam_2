@@ -281,6 +281,11 @@ const grupo   = GRUPOS_VALIDOS.includes(gParam) ? gParam : (esLocal ? "1" : null
 const pcodigo = jsPsych.data.getURLVariable("p") || "sin_codigo";
 const sujeto  = jsPsych.randomization.randomID(10);
 
+// Momento en que la persona abre el estudio, y su huso horario.
+// Se toma aca (no al final) para poder calcular cuanto tardo en total.
+const fechaInicio = new Date().toISOString();
+const husoMin = -new Date().getTimezoneOffset();
+
 const esMovil = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
 
 // Telefono, que NO es lo mismo que "movil": las tablets estan permitidas.
@@ -667,7 +672,15 @@ timeline.push({
   button_label: "Continuar",
   autocomplete: false,
   data: { tarea: "sociodemograficos" },
-  on_load: estilarBoton
+  on_load: estilarBoton,
+  // IMPRESCINDIBLE: survey-html-form devuelve todo dentro del objeto
+  // d.response, y "response" esta en COLS_FUERA (se descarta antes de
+  // guardar). Sin este volcado a columnas sueltas, las respuestas se
+  // pierden enteras: la planilla sale con rt pero sin edad ni genero.
+  on_finish: (d) => {
+    Object.assign(d, d.response);
+    d.edad = parseInt(d.response.edad);
+  }
 });
 
 // ── preparacion del entorno ─────────────────────────────────
@@ -852,6 +865,12 @@ timeline.push({
   data: { tarea: "cierre" },
   on_load: estilarBoton,
   on_finish: (d) => {
+    // Mismo motivo que en sociodemograficos: sin esto se pierden
+    // concentracion, sinceridad y comentarios.
+    Object.assign(d, d.response);
+    d.concentracion = parseInt(d.response.concentracion);
+    d.sinceridad = parseInt(d.response.sinceridad);
+
     d.ua_completo = navigator.userAgent;
     d.navegador = detectarNavegador(navigator.userAgent);
     d.so = detectarSO(navigator.userAgent);
@@ -859,6 +878,9 @@ timeline.push({
     d.alto_pantalla = window.screen ? window.screen.height : null;
     d.ancho_ventana = window.innerWidth || null;
     d.ip = ipPublica;   // null si el servicio de IP no respondio
+    d.fecha_inicio = fechaInicio;
+    d.huso_min = husoMin;
+    d.fecha_envio = new Date().toISOString();
   }
 });
 
