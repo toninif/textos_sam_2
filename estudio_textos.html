@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Valoración afectiva de situaciones</title>
+<script>
+// Asigna un grupo (1-4) y redirige a index.html?g=N, igual que g1.html...g4.html
+// pero sin que el link revele cual toca.
+//
+// Balanceo por "bolsa": en vez de sortear cada vez de cero, se arma una bolsa
+// con los cuatro grupos mezclados y se va sacando uno por vez. Recien cuando
+// se vacia se arma una bolsa nueva. Asi, en un mismo dispositivo (el celular
+// o la notebook de un alumno que toma varios participantes seguidos) cada
+// tanda de 4 tiene exactamente un participante por grupo, en lugar de quedar
+// librado al azar.
+//
+// Si localStorage no esta disponible (navegacion privada, permisos), cae
+// automaticamente en sorteo simple: peor balanceado, pero nunca bloquea.
+(function () {
+  var GRUPOS = ["1", "2", "3", "4"];
+  var CLAVE  = "textos_sam_bolsa";
+  var g;
+
+  function mezclar(a) {
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  try {
+    var bolsa = JSON.parse(localStorage.getItem(CLAVE) || "[]");
+    if (!Array.isArray(bolsa) || bolsa.length === 0) {
+      bolsa = mezclar(GRUPOS.slice());
+    }
+    g = bolsa.pop();
+    localStorage.setItem(CLAVE, JSON.stringify(bolsa));
+  } catch (e) {
+    g = GRUPOS[Math.floor(Math.random() * GRUPOS.length)];
+  }
+
+  if (GRUPOS.indexOf(g) === -1) {
+    g = GRUPOS[Math.floor(Math.random() * GRUPOS.length)];
+  }
+
+  // Se conserva cualquier otro parametro de la URL (por ejemplo ?p=codigo),
+  // igual que hacen los shims g1.html...g4.html.
+  // replace() y no href: el boton "atras" no devuelve al sorteo.
+  location.replace("index.html?g=" + g + location.search.replace("?", "&"));
+})();
+</script>
+</head>
+<body style="font-family:sans-serif;text-align:center;margin-top:60px">
+<p>Abriendo el estudio...</p>
+<p><a href="index.html?g=1">Si no arranca solo, hacé clic acá.</a></p>
+</body>
+</html>

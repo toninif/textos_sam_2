@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Valoración afectiva de situaciones</title>
+
+<script>
+// Si algo falla antes de que jsPsych dibuje, mostrarlo en pantalla
+// en lugar de dejar la pagina en blanco.
+window.addEventListener("error", function (e) {
+  document.body.innerHTML =
+    '<div style="font-family:monospace;padding:24px;max-width:700px;margin:40px auto;' +
+    'text-align:left;background:#fff3f3;border:1px solid #c0392b;color:#7b241c">' +
+    '<b>Error de JavaScript</b><br><br>' + (e.message || e) +
+    '<br><br><small>' + (e.filename || '') + ' linea ' + (e.lineno || '?') + '</small></div>';
+});
+</script>
+
+<!-- Todo servido desde el repo: ni librerias ni fuentes dependen de un CDN. -->
+<link rel="stylesheet" href="fuentes/fuentes.css">
+<script src="lib/jspsych.js"></script>
+<script src="lib/plugin-preload.js"></script>
+<script src="lib/plugin-html-button-response.js"></script>
+<script src="lib/plugin-survey-html-form.js"></script>
+<script src="lib/plugin-pipe.js"></script>
+<link rel="stylesheet" href="lib/jspsych.css">
+
+<script src="estimulos.js"></script>
+
+<style>
+:root{
+  --papel:#EFF0EC;
+  --blanco:#FBFBF9;
+  --tinta:#171A1C;
+  --tinta2:#636B71;
+  --tinta3:#9AA1A5;
+  --linea:#D3D6D0;
+  --acento:#2F6152;
+  --acento-luz:#E3EDE8;
+  /* muñecos protagonistas, intermedios discretos pero con blanco tactil ancho */
+  --sam:clamp(32px,10vw,60px);          /* muñequitos */
+  --sam-int:clamp(18px,5.6vw,34px);     /* recuadro intermedio VISIBLE */
+  --sam-int-touch:clamp(26px,7.6vw,44px); /* area clickeable del intermedio */
+  --gap:clamp(2px,.7vw,5px);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--papel);
+  background-image:
+    linear-gradient(to right,rgba(23,26,28,.035) 1px,transparent 1px),
+    linear-gradient(to bottom,rgba(23,26,28,.035) 1px,transparent 1px);
+  background-size:26px 26px;
+  color:var(--tinta);
+  font-family:Archivo,-apple-system,"Segoe UI",Roboto,sans-serif;
+  font-size:16px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* jsPsych: neutralizar su chrome y dar aire en los bordes */
+.jspsych-display-element{padding:0!important}
+.jspsych-content-wrapper{padding:0 5vw!important;box-sizing:border-box}
+.jspsych-content{max-width:660px;padding:8px 0 64px;text-align:left}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ── tipografia base ───────────────────────────────────────── */
+h1{font-family:Newsreader,Georgia,serif;font-weight:300;
+  font-size:clamp(2rem,6.5vw,2.9rem);line-height:1.09;letter-spacing:-.02em;
+  margin:0 0 20px}
+.eyebrow{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--acento);font-weight:600;margin:44px 0 16px}
+.bajada{font-family:Newsreader,Georgia,serif;font-size:1.1rem;line-height:1.62;
+  color:var(--tinta2);margin:0 0 28px;max-width:46ch}
+
+/* ── progreso ──────────────────────────────────────────────── */
+.prog{position:relative;height:1px;background:var(--linea);margin:26px 0 4px}
+.prog i{position:absolute;inset:0 auto 0 0;background:var(--acento)}
+.prog-n{font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--tinta3);font-weight:600;margin:0 0 30px}
+
+/* ── botones ───────────────────────────────────────────────── */
+.btn{font-family:inherit;font-weight:600;font-size:.95rem;letter-spacing:.01em;
+  padding:15px 30px;border-radius:2px;border:1px solid var(--tinta);
+  background:var(--tinta);color:var(--papel);cursor:pointer;display:inline-block;
+  transition:transform .12s,box-shadow .12s,opacity .15s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 3px 0 var(--acento)}
+.btn:focus-visible{outline:2px solid var(--acento);outline-offset:3px}
+.btn[disabled]{opacity:.32;cursor:not-allowed}
+.btn[disabled]:hover{transform:none;box-shadow:none}
+/* boton "tenue" hasta que las dos escalas del texto esten respondidas */
+.btn.espera{background:var(--blanco);color:var(--tinta3);border-color:var(--linea);
+  cursor:not-allowed}
+.btn.espera:hover{transform:none;box-shadow:none}
+
+/* ── portada: informacion y consentimiento ─────────────────── */
+.ficha{border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);
+  padding:14px 0;margin:0 0 8px}
+.ficha dt{font-size:.66rem;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--tinta3);font-weight:600;margin:0 0 4px}
+.ficha dd{margin:0;font-size:.95rem;font-weight:500}
+.banda{background:var(--tinta);color:var(--papel);font-weight:600;
+  font-size:.82rem;letter-spacing:.09em;text-transform:uppercase;
+  padding:9px 14px;margin:34px 0 16px}
+.info{margin:0 0 20px}
+.info h2{font-size:.95rem;font-weight:600;color:var(--tinta);margin:22px 0 7px}
+.info p{font-size:.96rem;line-height:1.62;color:var(--tinta2);margin:0 0 12px;
+  max-width:62ch}
+.info p strong{color:var(--tinta);font-weight:600}
+.preconsent{font-size:.93rem;line-height:1.6;color:var(--tinta2);margin:0 0 6px}
+.consent{border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);
+  padding:8px 0;margin:0 0 18px}
+.chk{display:flex;gap:13px;align-items:flex-start;padding:14px 2px;cursor:pointer;
+  border-bottom:1px solid var(--linea)}
+.chk:last-child{border-bottom:0}
+.chk input{position:absolute;opacity:0;width:0;height:0}
+.chk .caja{flex:0 0 auto;width:21px;height:21px;margin-top:1px;border-radius:3px;
+  border:1.5px solid var(--tinta3);background:var(--blanco);
+  display:grid;place-items:center;color:transparent;font-size:.8rem;font-weight:700;
+  transition:background .13s,border-color .13s,color .13s}
+.chk:hover .caja{border-color:var(--acento)}
+.chk input:checked ~ .caja{background:var(--acento);border-color:var(--acento);color:#fff}
+.chk input:focus-visible ~ .caja{outline:2px solid var(--acento);outline-offset:3px}
+.chk span.txt{font-size:.93rem;line-height:1.5;color:var(--tinta)}
+.aviso-consent{font-size:.8rem;color:var(--tinta3);margin:0 0 22px;min-height:1.1em}
+
+/* ── instrucciones ─────────────────────────────────────────── */
+.instr h1{font-size:clamp(1.7rem,5.5vw,2.3rem);margin-bottom:18px}
+.instr p{font-size:1rem;line-height:1.66;color:var(--tinta2);margin:0 0 14px;max-width:58ch}
+.instr p strong{color:var(--tinta);font-weight:600}
+.destaque{background:var(--blanco);border:1px solid var(--linea);
+  border-left:3px solid var(--acento);padding:16px 18px;margin:22px 0 26px;
+  font-size:.95rem;color:var(--tinta);line-height:1.6}
+
+/* ── estimulo ──────────────────────────────────────────────── */
+.rotulo-practica{display:inline-block;font-size:.66rem;letter-spacing:.15em;
+  text-transform:uppercase;font-weight:700;color:var(--acento);
+  background:var(--acento-luz);padding:5px 11px;margin-bottom:16px}
+.tarjeta{background:var(--blanco);border:1px solid var(--linea);
+  padding:26px 24px;margin-bottom:34px;position:relative}
+.tarjeta::before{content:"";position:absolute;left:-1px;top:18px;bottom:18px;
+  width:3px;background:var(--acento)}
+.tarjeta p{font-family:Newsreader,Georgia,serif;font-size:1.18rem;line-height:1.62;
+  margin:0;color:#22262A}
+.tarjeta p.solo-id{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:1.1rem}
+
+/* ── filas SAM ─────────────────────────────────────────────── */
+.dim{margin-bottom:30px}
+.dim + .dim{border-top:1px solid var(--linea);padding-top:26px}
+.dim-cab{margin-bottom:12px}
+.dim-cab h2{font-size:.72rem;letter-spacing:.17em;text-transform:uppercase;
+  font-weight:700;margin:0}
+.dim-cab .pista{display:block;font-size:.86rem;color:var(--tinta2);margin-top:5px;
+  font-weight:400;letter-spacing:0;text-transform:none}
+.fila{display:flex;gap:var(--gap);justify-content:center;align-items:center}
+.op{position:relative;cursor:pointer;line-height:0}
+.op input{position:absolute;opacity:0;width:0;height:0}
+.op img{width:var(--sam);height:auto;display:block;background:var(--blanco);
+  border:1px solid var(--linea);transition:border-color .13s,box-shadow .13s}
+/* recuadros intermedios: visualmente menores (jerarquia hacia los muñecos)
+   pero con un area de toque que NO se achica, para que el dedo no falle */
+.op-inter{display:flex;align-items:center;justify-content:center;
+  min-width:var(--sam-int-touch);min-height:var(--sam);cursor:pointer}
+.op-inter img{width:var(--sam-int)}
+.op:hover img{border-color:var(--tinta3)}
+.op input:checked ~ img{border-color:var(--acento);
+  box-shadow:0 0 0 2px var(--acento),0 0 0 6px var(--acento-luz)}
+.op input:focus-visible ~ img{outline:2px solid var(--acento);outline-offset:4px}
+
+/* muñecos de demostracion en las instrucciones: no clickeables */
+.op-demo{cursor:default;line-height:0}
+.op-demo img{width:var(--sam);height:auto;display:block;background:var(--blanco);
+  border:1px solid var(--linea)}
+.op-demo.op-inter{cursor:default}
+.op-demo.op-inter img{width:var(--sam-int)}
+
+/* ── sliders de autoinforme (cierre) ───────────────────────── */
+.slider-wrap{margin:6px 0 4px}
+.slider-wrap input[type=range]{width:100%;max-width:440px;accent-color:var(--acento);
+  height:26px;cursor:pointer}
+.slider-ext{display:flex;justify-content:space-between;max-width:440px;
+  font-size:.8rem;color:var(--tinta3);margin-top:-2px}
+
+/* ── PANAS ─────────────────────────────────────────────────── */
+.panas-pre{font-size:.72rem;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--tinta3);font-weight:600;margin:34px 0 10px}
+.adj{font-family:Newsreader,Georgia,serif;font-weight:400;
+  font-size:clamp(2.2rem,8.5vw,3.3rem);line-height:1;letter-spacing:-.025em;
+  margin:0 0 32px}
+#jspsych-html-button-response-btngroup{display:flex;flex-direction:column;gap:7px}
+.op-p{font-family:inherit;font-size:1rem;text-align:left;width:100%;
+  padding:15px 18px;background:var(--blanco);border:1px solid var(--linea);
+  border-radius:2px;cursor:pointer;color:var(--tinta);
+  display:flex;align-items:center;justify-content:space-between;
+  transition:border-color .13s,background .13s,color .13s,opacity .2s}
+.op-p:hover{border-color:var(--acento);color:var(--acento)}
+.op-p:focus-visible{outline:2px solid var(--acento);outline-offset:2px}
+.op-p .tic{opacity:0;font-weight:700}
+.op-p[disabled]{opacity:.3;cursor:default}
+.op-p.elegida,.op-p.elegida[disabled]{opacity:1;background:var(--acento);
+  border-color:var(--acento);color:#fff;font-weight:600}
+.op-p.elegida .tic{opacity:1}
+.panas-cont{font-size:.78rem;color:var(--tinta3);margin-top:20px}
+@media (min-width:640px){
+  #jspsych-html-button-response-btngroup{flex-direction:row;align-items:stretch}
+  .op-p{flex-direction:column;justify-content:center;text-align:center;gap:7px;
+    font-size:.87rem;padding:17px 8px}
+}
+
+/* ── formularios ───────────────────────────────────────────── */
+.campos{margin:0 0 8px}
+.preg{font-size:.98rem;font-weight:500;color:var(--tinta);margin:26px 0 8px}
+.campos > .preg:first-child{margin-top:0}
+.aclara{font-size:.86rem;color:var(--tinta2);margin:-4px 0 10px;line-height:1.5}
+.lista{margin:4px 0 6px;padding-left:20px;color:var(--tinta2);
+  font-size:1rem;line-height:1.66;max-width:58ch}
+.lista li{margin-bottom:11px}
+.lista strong{color:var(--tinta);font-weight:600}
+
+/* ── campos del cierre ─────────────────────────────────────── */
+.campo{font:inherit;padding:10px 12px;border:1px solid var(--linea);
+  background:var(--blanco);border-radius:2px;display:block;max-width:340px}
+.campo:focus-visible{outline:2px solid var(--acento);outline-offset:1px}
+
+/* ── guardando ─────────────────────────────────────────────── */
+.guardando{text-align:center;padding:90px 0 40px}
+.guardando h2{font-family:Newsreader,Georgia,serif;font-weight:300;
+  font-size:clamp(1.5rem,5vw,2rem);margin:0 0 12px}
+.guardando p{color:var(--tinta2);font-size:.95rem;margin:0}
+.puntos{display:flex;gap:8px;justify-content:center;margin:0 0 28px}
+.puntos i{width:9px;height:9px;border-radius:50%;background:var(--acento);
+  opacity:.25;animation:late 1.2s infinite ease-in-out}
+.puntos i:nth-child(2){animation-delay:.18s}
+.puntos i:nth-child(3){animation-delay:.36s}
+@keyframes late{0%,70%,100%{opacity:.25}35%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.puntos i{animation:none;opacity:.6}}
+
+/* ── cierre y avisos ───────────────────────────────────────── */
+.cierre{text-align:center;padding:60px 0 24px}
+.sello{width:60px;height:60px;margin:0 auto 26px;border:1.5px solid var(--acento);
+  border-radius:50%;display:grid;place-items:center;color:var(--acento);font-size:1.5rem}
+.cierre .bajada{margin-inline:auto}
+.alerta{background:var(--blanco);border:1px solid var(--linea);
+  border-left:3px solid #B4741F;padding:20px 22px;margin:60px auto;
+  max-width:560px;line-height:1.6}
+.alerta h3{margin:0 0 10px;font-size:1.05rem}
+</style>
+</head>
+<body></body>
+
+<script>
+// ============================================================
+// CONFIGURACION
+// ============================================================
+const DATAPIPE_ID = "jdbUOy2sY5kS";   // experimento "Textos sam ia" en DataPipe
+
+// true  = muestra solo el nombre del estimulo (para pilotear flujo y layout)
+// false = muestra el texto real
+const MOSTRAR_SOLO_ID = false;
+
+// Cuanto queda visible la opcion elegida en el PANAS antes de avanzar (ms).
+const MARCA_MS = 450;
+
+const IMGS = [
+  "img/val_1.png","img/val_3.png","img/val_5.png","img/val_7.png","img/val_9.png",
+  "img/aro_1.png","img/aro_3.png","img/aro_5.png","img/aro_7.png","img/aro_9.png",
+  "img/sam_intermedio.png"
+];
+
+const jsPsych = initJsPsych({ show_progress_bar: false });
+
+const modoPrueba = DATAPIPE_ID === "CAMBIAR_POR_TU_ID";
+
+// grupo (set) y codigo de participante desde la URL:  ?g=1&p=abc
+// Sin un ?g= valido NO arranca: un default silencioso mandaria participantes
+// del set 3 a la lista del set 1 sin que nadie se entere.
+const GRUPOS_VALIDOS = ["1", "2", "3", "4"];
+const gParam  = String(jsPsych.data.getURLVariable("g") ?? "");
+const esLocal = location.protocol === "file:";
+const grupo   = GRUPOS_VALIDOS.includes(gParam) ? gParam : (esLocal ? "1" : null);
+const pcodigo = jsPsych.data.getURLVariable("p") || "sin_codigo";
+const sujeto  = jsPsych.randomization.randomID(10);
+
+const esMovil = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+
+// Navegador y sistema operativo, parseados del userAgent.
+// El orden de los chequeos importa: Edge y Opera tambien dicen "Chrome",
+// y todo lo que corre en iOS dice "Safari".
+function detectarNavegador(ua) {
+  if (/Edg\//.test(ua)) return "Edge";
+  if (/OPR\/|Opera/.test(ua)) return "Opera";
+  if (/SamsungBrowser/.test(ua)) return "Samsung Internet";
+  if (/Firefox\//.test(ua)) return "Firefox";
+  if (/Chrome\//.test(ua)) return "Chrome";
+  if (/Safari\//.test(ua)) return "Safari";
+  return "otro";
+}
+function detectarSO(ua) {
+  if (/Android/.test(ua)) return "Android";
+  if (/iPhone|iPad|iPod/.test(ua)) return "iOS";
+  if (/Windows/.test(ua)) return "Windows";
+  if (/Macintosh/.test(ua)) return "macOS";
+  if (/Linux/.test(ua)) return "Linux";
+  return "otro";
+}
+
+// IP publica: el navegador no la conoce, hay que preguntarsela a un servicio
+// externo. Se pide al arrancar, en paralelo, y NUNCA bloquea: si el servicio
+// falla o la red del aula lo corta, la columna queda vacia y no pasa nada.
+let ipPublica = null;
+fetch("https://api.ipify.org?format=json")
+  .then(r => r.json())
+  .then(d => { ipPublica = d.ip; })
+  .catch(() => {});
+
+jsPsych.data.addProperties({
+  sujeto: sujeto, grupo: grupo, codigo_participante: pcodigo,
+  set: "S" + grupo, dispositivo: esMovil ? "movil" : "escritorio"
+});
+
+// Columnas que no aportan al analisis y ensucian la planilla.
+// OJO: trial_type NO se puede sacar, DataPipe lo exige para validar.
+const COLS_FUERA = ["stimulus", "response", "plugin_version",
+  "success", "timeout", "failed_images", "failed_audio", "failed_video"];
+
+const datosLimpios = () => jsPsych.data.get().ignore(COLS_FUERA).csv();
+
+const misEstimulos = ESTIMULOS.filter(e => e.set === "S" + grupo);
+const N_TEXTOS = misEstimulos.length;
+const N_PANAS  = PANAS_ITEMS.length;
+
+// ============================================================
+// PROGRESO
+// El PANAS ocupa el primer tercio de la barra; los textos el resto.
+// ============================================================
+let iPanas = 0, iTexto = 0;
+
+function progreso(frac, rotulo) {
+  return `<div class="prog"><i style="width:${Math.round(frac * 100)}%"></i></div>
+          <p class="prog-n">${rotulo}</p>`;
+}
+
+// Estiliza el boton de los trials de una sola opcion.
+const unBoton = (c) => `<button class="btn">${c}</button>`;
+
+// Aplica la clase .btn al boton de envio de survey-html-form.
+function estilarBoton() {
+  const b = document.querySelector("#jspsych-survey-html-form-next");
+  if (b) b.className = "btn";
+}
+
+// ============================================================
+// PANTALLA DEL ESTIMULO (dos filas de maniquies)
+// ============================================================
+function filaSAM(nombre, prefijo, rotulo, pista) {
+  const demo = nombre.startsWith("demo_");
+  let o = "";
+  for (let i = 1; i <= 9; i++) {
+    const img = (i % 2) ? `img/${prefijo}_${i}.png` : "img/sam_intermedio.png";
+    const inter = (i % 2 === 0) ? " op-inter" : "";
+    o += demo
+      ? `<span class="op op-demo${inter}"><img src="${img}" alt=""></span>`
+      : `<label class="op${inter}">
+            <input type="radio" name="${nombre}" value="${i}" required>
+            <img src="${img}" alt="opción ${i} de 9"></label>`;
+  }
+  const p = pista ? `<span class="pista">${pista}</span>` : "";
+  return `<div class="dim"><div class="dim-cab"><h2>${rotulo}</h2>${p}</div>
+          <div class="fila">${o}</div></div>`;
+}
+
+const PISTA_V = "Qué tanto te agrada o te desagrada lo que leíste.";
+const PISTA_A = "Qué tanto te activa o te calma lo que leíste.";
+
+const HTML_SAM = filaSAM("valencia", "val", "Valencia") +
+                 filaSAM("activacion", "aro", "Activación");
+const HTML_SAM_PRACTICA = filaSAM("valencia", "val", "Valencia", PISTA_V) +
+                          filaSAM("activacion", "aro", "Activación", PISTA_A);
+
+function pantallaSAM(esPractica) {
+  return {
+    type: jsPsychSurveyHtmlForm,
+    preamble: () => {
+      const esControl = jsPsych.evaluateTimelineVariable("control");
+      const crudo = jsPsych.evaluateTimelineVariable("texto");
+      const cuerpo = (MOSTRAR_SOLO_ID && !esControl && !esPractica)
+        ? `<p class="solo-id">${jsPsych.evaluateTimelineVariable("id")}</p>`
+        : `<p>${crudo}</p>`;
+      if (esPractica) {
+        return `<p class="eyebrow">Parte 2 de 2</p>
+                <span class="rotulo-practica">Práctica</span>
+                <div class="tarjeta">${cuerpo}</div>`;
+      }
+      iTexto++;
+      return progreso(0.34 + 0.66 * (iTexto / N_TEXTOS),
+                      `Parte 2 de 2 · situación ${iTexto} de ${N_TEXTOS}`) +
+             `<div class="tarjeta">${cuerpo}</div>`;
+    },
+    html: esPractica ? HTML_SAM_PRACTICA : HTML_SAM,
+    button_label: "Continuar",
+    autocomplete: false,
+    data: {
+      tarea: esPractica ? "practica" : "sam",
+      id_texto: jsPsych.timelineVariable("id"),
+      cuadrante: jsPsych.timelineVariable("cuadrante"),
+      es_control: jsPsych.timelineVariable("control")
+    },
+    on_load: () => {
+      estilarBoton();
+      const boton = document.querySelector("#jspsych-survey-html-form-next");
+      // El boton arranca "tenue" y recien se activa cuando las DOS escalas
+      // fueron respondidas, para avisarle al participante que ya puede seguir.
+      if (boton) { boton.classList.add("espera"); boton.disabled = true; }
+      const revisarBoton = () => {
+        if (!boton) return;
+        const listo = reg.tv !== null && reg.ta !== null;
+        boton.disabled = !listo;
+        boton.classList.toggle("espera", !listo);
+      };
+      // Registro fino: cuando toco por primera vez cada escala y toda la
+      // secuencia de maniquies que fue eligiendo. El evento "change" no se
+      // dispara al reelegir el mismo, asi que cada entrada es un cambio real.
+      reg = { t0: performance.now(), v: [], a: [], tv: null, ta: null };
+      document.querySelectorAll('.fila input[type=radio]').forEach((inp) => {
+        inp.addEventListener("change", () => {
+          const ms = Math.round(performance.now() - reg.t0);
+          if (inp.name === "valencia") {
+            if (reg.tv === null) reg.tv = ms;
+            reg.v.push(inp.value);
+          } else {
+            if (reg.ta === null) reg.ta = ms;
+            reg.a.push(inp.value);
+          }
+          revisarBoton();
+        });
+      });
+    },
+    on_finish: (d) => {
+      d.valencia = parseInt(d.response.valencia);
+      d.activacion = parseInt(d.response.activacion);
+      d.t_valencia = reg.tv;
+      d.t_activacion = reg.ta;
+      d.clicks_valencia = reg.v.join("|");
+      d.clicks_activacion = reg.a.join("|");
+      if (d.tarea === "sam") d.orden = ++contadorOrden;
+      delete d.response;
+    }
+  };
+}
+let contadorOrden = 0;
+// Se reinicia en cada pantalla de estimulo (ver on_load de pantallaSAM).
+let reg = { t0: 0, v: [], a: [], tv: null, ta: null };
+
+// ============================================================
+// TIMELINE
+// ============================================================
+const timeline = [];
+
+timeline.push({ type: jsPsychPreload, images: IMGS, data: { tarea: "preload" } });
+
+// ── portada: informacion + consentimiento ───────────────────
+timeline.push({
+  type: jsPsychSurveyHtmlForm,
+  preamble: `
+    <p class="eyebrow">Estudio de valoración afectiva</p>
+    <h1>Información para participantes</h1>
+
+    <dl class="ficha">
+      <dt>Duración aproximada</dt><dd>15 minutos</dd>
+    </dl>
+
+    <p class="banda">Información para el participante</p>
+    <div class="info">
+      <p>Se te está invitando a participar de un trabajo de investigación sobre
+        cómo las personas valoran afectivamente diferentes situaciones cuando las
+        leen. Es importante que entiendas por qué se lleva a cabo este estudio, a
+        quiénes involucra y sus posibles consecuencias. Por favor, leé atentamente
+        esta información.</p>
+
+      <h2>¿Cuáles son los propósitos de este estudio?</h2>
+      <p>El estudio busca establecer valores normativos de agrado y activación
+        para un conjunto de textos breves en español rioplatense.</p>
+
+      <h2>¿Quiénes participarán de este estudio?</h2>
+      <p>Participarán personas mayores de 18 años.</p>
+
+      <h2>¿Deberías participar?</h2>
+      <p>Tu participación es voluntaria y anónima. Podés suspender la actividad en
+        el momento en que quieras, sin necesidad de dar explicaciones.</p>
+
+      <h2>¿Qué me pasará si participo de este estudio?</h2>
+      <p>El estudio consiste en responder un cuestionario breve sobre tu estado de
+        ánimo actual y luego leer una serie de situaciones, indicando para cada una
+        cómo te sentirías frente a ellas. El tiempo total de duración es de
+        aproximadamente 15 minutos.</p>
+
+      <h2>¿Qué es lo que necesito hacer yo? ¿Cuáles son mis responsabilidades?</h2>
+      <p>Deberás estar dispuesto a leer con atención cada situación y responder
+        según tu impresión personal. No hay respuestas correctas ni incorrectas.</p>
+
+      <h2>¿Existen posibles riesgos o malestares por participar?</h2>
+      <p>No hay riesgos asociados a la participación. Algunas de las situaciones
+        describen momentos que podrían ser desagradables y eventualmente podrías
+        experimentar desagrado.</p>
+
+      <h2>¿Cuáles son los posibles beneficios por participar?</h2>
+      <p>La información que se obtenga de este estudio podrá ayudar a la mejor
+        comprensión de los procesos emocionales implicados en la lectura y aportar
+        material estandarizado para la investigación en psicología. Los resultados
+        del estudio podrán ser publicados en la literatura científica.</p>
+
+      <h2>¿La información recogida será confidencial?</h2>
+      <p>La información recogida será anónima y confidencial. No habrá registro de
+        tu nombre ni de ningún tipo de dato que te identifique.</p>
+
+      <h2>¿Podré acceder a los resultados de este estudio?</h2>
+      <p>Sí, si lo deseas, al finalizar el estudio completo se te informará sobre
+        los resultados del mismo.</p>
+    </div>
+
+    <p class="banda">Información de contacto</p>
+    <div class="info">
+      <p>La investigadora a cargo es Natalia Irrazabal. Cualquier consulta sobre
+        esta investigación se puede realizar a su e-mail: nirrazabal@psi.uba.ar</p>
+    </div>
+
+    <p class="banda">Confirmá que querés hacer esta encuesta</p>
+    <p class="preconsent">Doy mi consentimiento para participar del proyecto de
+      investigación sobre valoración afectiva de textos. Al aceptar este
+      consentimiento acepto de manera voluntaria y anónima participar en esta
+      investigación. Además, dejo constancia que se me informó:</p>`,
+  html: `
+    <div class="consent">
+      <label class="chk"><input type="checkbox" name="c1" required>
+        <span class="caja">✓</span>
+        <span class="txt">Sobre los procedimientos y propósitos de la investigación.</span></label>
+      <label class="chk"><input type="checkbox" name="c2" required>
+        <span class="caja">✓</span>
+        <span class="txt">Que en cualquier momento puedo desistir de participar,
+          revocando este consentimiento y dejando sin efecto la presente
+          manifestación de voluntad.</span></label>
+      <label class="chk"><input type="checkbox" name="c3" required>
+        <span class="caja">✓</span>
+        <span class="txt">Que se resguardará mi identidad como participante y se
+          tomarán los recaudos necesarios para garantizar la confidencialidad de
+          mis datos, como así también de cualquier otra información que brinde.</span></label>
+      <label class="chk"><input type="checkbox" name="c4" required>
+        <span class="caja">✓</span>
+        <span class="txt">Dejo constancia de haber comprendido que no se me
+          brindará una devolución individual y presto plena conformidad en cuanto
+          a mi participación.</span></label>
+    </div>
+    <p class="aviso-consent" id="avisoConsent"></p>`,
+  button_label: "Comenzar",
+  autocomplete: false,
+  data: { tarea: "consentimiento" },
+  on_load: () => {
+    estilarBoton();
+    const btn = document.querySelector("#jspsych-survey-html-form-next");
+    const cajas = [...document.querySelectorAll(".consent input")];
+    const aviso = document.getElementById("avisoConsent");
+    // Guarda: si el DOM no es el esperado, no deshabilitamos nada. El atributo
+    // required del navegador sigue bloqueando el envio igual.
+    if (!btn || cajas.length === 0 || !aviso) return;
+    const revisar = () => {
+      const faltan = cajas.filter(c => !c.checked).length;
+      btn.disabled = faltan > 0;
+      aviso.textContent = faltan === 0 ? ""
+        : `Marcá las ${faltan} casillas que faltan para continuar.`;
+    };
+    cajas.forEach(c => c.addEventListener("change", revisar));
+    revisar();
+  }
+});
+
+// ── sociodemograficos ───────────────────────────────────────
+timeline.push({
+  type: jsPsychSurveyHtmlForm,
+  preamble: `<p class="eyebrow">Antes de empezar</p>
+    <h1>Unos datos sobre vos</h1>
+    <p class="instr" style="margin-bottom:26px">Ninguno de estos datos permite
+    identificarte. Sirven para describir quiénes participaron.</p>`,
+  html: `
+    <div class="campos">
+      <p class="preg">¿Cuántos años tenés?</p>
+      <input class="campo" type="number" name="edad" min="18" max="99" required
+             style="width:110px">
+
+      <p class="preg">Género</p>
+      <select class="campo" name="genero" required>
+        <option value="">Elegí una opción</option>
+        <option value="mujer">Mujer</option>
+        <option value="varon">Varón</option>
+        <option value="otro">Otro</option>
+        <option value="nc">Prefiero no responder</option>
+      </select>
+
+      <p class="preg">¿Dónde viviste la mayor parte de tu vida hasta los 18 años?</p>
+      <select class="campo" name="region" required>
+        <option value="">Elegí una opción</option>
+        <option value="caba">Ciudad de Buenos Aires</option>
+        <option value="gba">Gran Buenos Aires</option>
+        <option value="pba">Resto de la provincia de Buenos Aires</option>
+        <option value="otra_prov">Otra provincia</option>
+        <option value="otro_pais">Otro país</option>
+      </select>
+
+      <p class="preg">¿Cuál es tu máximo nivel educativo alcanzado?</p>
+      <select class="campo" name="educacion" required>
+        <option value="">Elegí una opción</option>
+        <option value="primaria_inc">Primaria incompleta</option>
+        <option value="primaria">Primaria completa</option>
+        <option value="secundaria_inc">Secundaria incompleta</option>
+        <option value="secundaria">Secundaria completa</option>
+        <option value="terciaria_univ_inc">Terciaria o universitaria incompleta</option>
+        <option value="terciaria_univ">Terciaria o universitaria completa</option>
+        <option value="posgrado_inc">Posgrado incompleto</option>
+        <option value="posgrado">Posgrado completo</option>
+      </select>
+
+      <p class="preg">¿En qué nivel socioeconómico considerás que te ubicás?</p>
+      <select class="campo" name="nse" required>
+        <option value="">Elegí una opción</option>
+        <option value="bajo">Bajo</option>
+        <option value="medio_bajo">Medio bajo</option>
+        <option value="medio">Medio</option>
+        <option value="medio_alto">Medio alto</option>
+        <option value="alto">Alto</option>
+      </select>
+
+      <p class="preg">¿El español es tu lengua materna?</p>
+      <select class="campo" name="lengua" required>
+        <option value="">Elegí una opción</option>
+        <option value="si">Sí</option>
+        <option value="no">No</option>
+      </select>
+
+      <p class="preg">¿Ya habías participado antes de este estudio?</p>
+      <select class="campo" name="repetido" required>
+        <option value="">Elegí una opción</option>
+        <option value="no">No, es la primera vez</option>
+        <option value="si">Sí, ya lo hice antes</option>
+      </select>
+    </div>`,
+  button_label: "Continuar",
+  autocomplete: false,
+  data: { tarea: "sociodemograficos" },
+  on_load: estilarBoton
+});
+
+// ── preparacion del entorno ─────────────────────────────────
+timeline.push({
+  type: jsPsychHtmlButtonResponse,
+  stimulus: `<div class="instr">
+    <p class="eyebrow">Antes de empezar</p>
+    <h1>Preparate</h1>
+    <p>La tarea dura unos 15 minutos y no se puede pausar ni retomar más tarde.
+      Para que salga bien, antes de arrancar:</p>
+    <ul class="lista">
+      <li><strong>No cierres esta ventana ni cambies de aplicación.</strong>
+        Si salís antes de terminar, tus respuestas no se guardan.</li>
+    </ul>
+    <div class="destaque">Cuando estés listo, tocá Comenzar. A partir de ahí
+      seguí hasta la pantalla de cierre sin interrupciones.</div></div>`,
+  choices: ["Comenzar"],
+  button_html: unBoton,
+  data: { tarea: "preparacion" }
+});
+
+// ── instrucciones del PANAS ─────────────────────────────────
+timeline.push({
+  type: jsPsychHtmlButtonResponse,
+  stimulus: `<div class="instr">
+    <p class="eyebrow">Parte 1 de 2</p>
+    <h1>PANAS</h1>
+    <p style="font-size:.95rem;color:var(--tinta2);margin:-8px 0 18px">Escala de
+      Afecto Positivo y Negativo</p>
+    <p>Vas a ver una palabra por pantalla. Cada una describe un sentimiento o
+      una emoción.</p>
+    <p>Para cada palabra, indicá en qué medida te sentís así <strong>en este
+      mismo momento</strong>, no en general ni en los últimos días.</p>
+    <div class="destaque">Son ${N_PANAS} palabras y toma menos de dos minutos.
+      Tocá una opción y pasa sola a la siguiente. Respondé con lo primero que
+      te salga.</div></div>`,
+  choices: ["Comenzar"],
+  button_html: unBoton,
+  data: { tarea: "instr_panas" }
+});
+
+// ── PANAS: un adjetivo por pantalla, con auto-avance ────────
+timeline.push({
+  timeline: [{
+    type: jsPsychHtmlButtonResponse,
+    stimulus: () => {
+      iPanas++;
+      return progreso(0.34 * (iPanas / N_PANAS),
+                      `Parte 1 de 2 · palabra ${iPanas} de ${N_PANAS}`) +
+             `<p class="panas-pre">En este momento me siento</p>
+              <p class="adj">${jsPsych.evaluateTimelineVariable("adj")}</p>`;
+    },
+    choices: PANAS_ESCALA,
+    button_html: (c) => `<button class="op-p">${c}<span class="tic">✓</span></button>`,
+    prompt: '<p class="panas-cont">Tocá una opción para continuar</p>',
+    enable_button_after: 300,
+    // El plugin no termina el ensayo solo: lo terminamos nosotros despues de
+    // MARCA_MS, para que la eleccion quede visible antes de avanzar.
+    response_ends_trial: false,
+    trial_duration: null,
+    on_load: () => {
+      const grupoB = document.getElementById("jspsych-html-button-response-btngroup");
+      if (!grupoB) return;
+      const t0 = performance.now();
+      grupoB.addEventListener("click", (ev) => {
+        const btn = ev.target.closest("button");
+        if (!btn || grupoB.dataset.listo) return;
+        grupoB.dataset.listo = "1";
+        const rt = Math.round(performance.now() - t0);
+        btn.classList.add("elegida");
+        jsPsych.pluginAPI.setTimeout(
+          () => jsPsych.finishTrial({ rt: rt, response: parseInt(btn.dataset.choice) }),
+          MARCA_MS);
+      }, true);
+    },
+    data: { tarea: "panas", adjetivo: jsPsych.timelineVariable("adj") },
+    on_finish: (d) => { d.puntaje = d.response + 1; }
+  }],
+  timeline_variables: PANAS_ITEMS.map(a => ({ adj: a }))
+});
+
+// ── instrucciones de la tarea ───────────────────────────────
+timeline.push({
+  type: jsPsychHtmlButtonResponse,
+  stimulus: `<div class="instr">
+    <p class="eyebrow">Parte 2 de 2</p>
+    <h1>Las situaciones</h1>
+    <p>Vas a leer ${N_TEXTOS} situaciones breves, una por pantalla. Para cada una
+      imaginá que te está pasando a vos y respondé dos características (valencia y
+      activación) usando unos muñequitos.</p>
+    <p>Primero, <strong>valencia</strong> significa qué tan agradable o
+      desagradable te resulta la situación. La escala va en aumento desde muy
+      desagradable a muy agradable.</p>
+    ${filaSAM("demo_val", "val", "Valencia")}
+    <p style="margin-top:22px">Segundo, <strong>activación</strong> significa qué
+      tan activado o calmo te sentís frente a la situación. La escala va en aumento
+      desde muy calmo a muy activado. Esto es independiente de lo anterior: se
+      puede estar activado y sentirse bien o activado y sentirse mal. Y lo mismo
+      puede pasar cuando estás calmo.</p>
+    ${filaSAM("demo_aro", "aro", "Activación")}
+    <div class="destaque" style="margin-top:26px">Podés elegir cualquiera de las
+      nueve posiciones, incluidos los recuadros intermedios entre los muñequitos.
+      No hay respuestas correctas ni incorrectas: tu primera impresión es la que
+      nos interesa.</div>
+    <p>Vamos a empezar con tres situaciones de práctica.</p></div>`,
+    choices: ["Empezar la práctica"],
+  button_html: unBoton,
+  data: { tarea: "instrucciones" }
+});
+
+timeline.push({
+  timeline: [pantallaSAM(true)],
+  timeline_variables: PRACTICA
+});
+
+timeline.push({
+  type: jsPsychHtmlButtonResponse,
+  stimulus: `<div class="instr"><p class="eyebrow">Parte 2 de 2</p>
+    <h1>Listo</h1>
+    <p>Ahora empiezan las situaciones. A partir de acá no vas a ver estas
+      aclaraciones, solo el texto y las dos escalas.</p></div>`,
+  choices: ["Comenzar"],
+  button_html: unBoton,
+  data: { tarea: "fin_practica" }
+});
+
+// ── los ensayos: tres bloques con controles en posicion fija ─
+// Los 40 textos se mezclan al azar por participante, pero los controles
+// caen SIEMPRE en las posiciones 11 y 32 (tras 10 y tras 30 textos).
+// Asi son comparables entre participantes: fallar el control temprano o
+// el tardio significa lo mismo para todos.
+const soloTextos = jsPsych.randomization.shuffle(misEstimulos.filter(e => !e.control));
+const controles  = misEstimulos.filter(e => e.control);   // CHECK_01, CHECK_02
+
+const secuencia = (soloTextos.length >= 40 && controles.length === 2)
+  ? [
+      ...soloTextos.slice(0, 10),    // bloque 1: 10 textos
+      controles[0],                  // posicion 11
+      ...soloTextos.slice(10, 30),   // bloque 2: 20 textos
+      controles[1],                  // posicion 32
+      ...soloTextos.slice(30)        // bloque 3: 10 textos
+    ]
+  : jsPsych.randomization.shuffle(misEstimulos);  // resguardo si algo no cuadra
+
+timeline.push({
+  timeline: [pantallaSAM(false)],
+  timeline_variables: secuencia,
+  randomize_order: false
+});
+
+// ── cierre ──────────────────────────────────────────────────
+timeline.push({
+  type: jsPsychSurveyHtmlForm,
+  preamble: `<p class="eyebrow">Para terminar</p><h1>Dos cosas y listo</h1>
+    <div class="destaque" style="border-left-color:#B4741F">
+      <strong>No cierres la ventana todavía.</strong> Cuando aprietes Enviar, tus
+      respuestas se guardan. Recién ahí vas a poder cerrar.</div>`,
+  html: `
+    <div class="campos">
+      <p class="preg">¿Cuán concentrado/a estuviste durante la tarea?</p>
+      <p class="aclara">Contestá con franqueza: saberlo nos ayuda y no tiene
+        ninguna consecuencia para vos.</p>
+      <div class="slider-wrap">
+        <input type="range" name="concentracion" min="0" max="100" value="50" required>
+        <div class="slider-ext"><span>Nada concentrado/a</span><span>Muy concentrado/a</span></div>
+      </div>
+
+      <p class="preg">¿Cuán sincero/a fuiste en tus respuestas?</p>
+      <p class="aclara">Contestá con franqueza: saberlo nos ayuda y no tiene
+        ninguna consecuencia para vos.</p>
+      <div class="slider-wrap">
+        <input type="range" name="sinceridad" min="0" max="100" value="50" required>
+        <div class="slider-ext"><span>Nada sincero/a</span><span>Muy sincero/a</span></div>
+      </div>
+
+      <p class="preg">Comentarios (opcional)</p>
+      <textarea class="campo" name="comentarios" rows="3"
+                style="width:100%;max-width:440px"></textarea>
+    </div>`,
+  button_label: "Enviar",
+  autocomplete: false,
+  data: { tarea: "cierre" },
+  on_load: estilarBoton,
+  on_finish: (d) => {
+    d.ua_completo = navigator.userAgent;
+    d.navegador = detectarNavegador(navigator.userAgent);
+    d.so = detectarSO(navigator.userAgent);
+    d.ancho_pantalla = window.screen ? window.screen.width : null;
+    d.alto_pantalla = window.screen ? window.screen.height : null;
+    d.ancho_ventana = window.innerWidth || null;
+    d.ip = ipPublica;   // null si el servicio de IP no respondio
+  }
+});
+
+// ── guardado ────────────────────────────────────────────────
+let guardadoOk = false;
+
+if (!modoPrueba) {
+  // Tres intentos con espera creciente. Con 200 personas terminando casi a la
+  // vez, un 429 o un timeout puntual es esperable; reintentar lo cubre.
+  timeline.push({
+    type: jsPsychHtmlButtonResponse,
+    stimulus: `<div class="guardando">
+      <div class="puntos"><i></i><i></i><i></i></div>
+      <h2>Guardando tus respuestas</h2>
+      <p id="estadoGuardado">No cierres la ventana.</p></div>`,
+    choices: [],
+    // Sin duracion fija: la pantalla se va cuando el envio termina, no antes.
+    // El envio va en on_load (no en on_finish) para que el cartel se vea
+    // DURANTE la espera y no un instante previo.
+    trial_duration: null,
+    data: { tarea: "guardando" },
+    on_load: async () => {
+      const estado = document.getElementById("estadoGuardado");
+      const decir = (t) => { if (estado) estado.textContent = t; };
+      const t0 = performance.now();
+      try {
+        const csv = datosLimpios();
+        for (let intento = 1; intento <= 3 && !guardadoOk; intento++) {
+          if (intento > 1) decir(`Reintentando (${intento} de 3)...`);
+          try {
+            const r = await fetch("https://pipe.jspsych.org/api/data/", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Accept: "*/*" },
+              body: JSON.stringify({
+                experimentID: DATAPIPE_ID,
+                filename: `${sujeto}_g${grupo}.csv`,
+                data: csv
+              })
+            });
+            if (r.ok) guardadoOk = true;
+            else await new Promise(res => setTimeout(res, intento * 2000));
+          } catch (e) {
+            await new Promise(res => setTimeout(res, intento * 2000));
+          }
+        }
+      } finally {
+        // Pase lo que pase, seguir adelante: nunca dejar al participante
+        // colgado en esta pantalla.
+        jsPsych.finishTrial({ ms_guardado: Math.round(performance.now() - t0),
+                              guardado_ok: guardadoOk });
+      }
+    }
+  });
+}
+
+timeline.push({
+  type: jsPsychHtmlButtonResponse,
+  stimulus: () => modoPrueba
+    ? `<div class="cierre"><div class="sello">✓</div><h1>Fin — modo prueba</h1>
+       <p class="bajada">No se envió nada a ningún servidor. Apretá el botón para
+       bajar el CSV.</p></div>`
+    : guardadoOk
+      ? `<div class="cierre"><div class="sello">✓</div><h1>Listo</h1>
+         <p class="bajada">Tus respuestas quedaron guardadas. Ya podés cerrar esta
+         ventana. Gracias por el tiempo.</p></div>`
+      : `<div class="cierre"><h1>No se pudieron enviar tus respuestas</h1>
+         <p class="bajada">Hubo un problema de conexión. Apretá el botón para
+         descargar el archivo y enviáselo por mail a quien te pasó el enlace.
+         Así tu participación no se pierde.</p></div>`,
+  choices: () => (modoPrueba || !guardadoOk) ? ["Descargar el archivo"] : [],
+  button_html: unBoton,
+  trial_duration: null,
+  data: { tarea: "final" },
+  on_finish: () => {
+    if (modoPrueba || !guardadoOk) {
+      jsPsych.data.get().ignore(COLS_FUERA)
+        .localSave("csv", `RESPALDO_${sujeto}_g${grupo}.csv`);
+    }
+  }
+});
+
+// ============================================================
+// ARRANQUE
+// ============================================================
+function aviso(titulo, cuerpo) {
+  document.body.innerHTML =
+    `<div class="alerta"><h3>${titulo}</h3>${cuerpo}</div>`;
+}
+
+if (grupo === null) {
+  aviso("El enlace está incompleto",
+    '<p>Falta indicar el grupo. El link tiene que terminar en <code>g1.html</code>, ' +
+    '<code>g2.html</code>, <code>g3.html</code> o <code>g4.html</code>.</p>' +
+    '<p>Si lo recibiste así, avisale a quien te lo mandó.</p>');
+} else if (misEstimulos.length === 0) {
+  aviso("Este grupo todavía no está activo",
+    '<p>El grupo ' + grupo + ' no tiene estímulos cargados. Falta correr ' +
+    '<code>generar_estimulos.R</code> con los 160 textos y subir el ' +
+    '<code>estimulos.js</code> nuevo.</p>' +
+    '<p>(Este aviso es para el investigador, no para participantes.)</p>');
+} else {
+  jsPsych.run(timeline);
+}
+</script>
+</html>
