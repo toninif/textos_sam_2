@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>¿Qué falta? · Estudio de valoración afectiva</title>
+<link rel="stylesheet" href="fuentes/fuentes.css">
+<style>
+:root{
+  --papel:#EFF0EC; --blanco:#FBFBF9; --tinta:#171A1C; --tinta2:#636B71;
+  --tinta3:#9AA1A5; --linea:#D3D6D0; --acento:#2F6152; --acento-luz:#E3EDE8;
+  --cerrado:#B4741F;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--papel);color:var(--tinta);
+  font-family:Archivo,-apple-system,"Segoe UI",Roboto,sans-serif;
+  font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.hoja{max-width:660px;margin:0 auto;padding:8px 5vw 64px}
+h1{font-family:Newsreader,Georgia,serif;font-weight:300;
+  font-size:clamp(1.9rem,6vw,2.6rem);line-height:1.1;margin:0 0 10px}
+.eyebrow{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--acento);font-weight:600;margin:44px 0 16px}
+.bajada{font-family:Newsreader,Georgia,serif;font-size:1.05rem;line-height:1.6;
+  color:var(--tinta2);margin:0 0 12px;max-width:48ch}
+.sello-fecha{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--tinta3);font-weight:600;margin:0 0 30px}
+
+.perfil{background:var(--blanco);border:1px solid var(--linea);
+  border-left:3px solid var(--acento);padding:18px 20px;margin:0 0 14px;
+  display:flex;justify-content:space-between;align-items:center;gap:18px}
+.perfil.cerrado{border-left-color:var(--cerrado);opacity:.65}
+.perfil h2{font-size:1.02rem;font-weight:600;margin:0 0 3px}
+.perfil .det{font-size:.85rem;color:var(--tinta2);margin:0}
+.numero{font-family:Newsreader,Georgia,serif;font-size:2.3rem;line-height:1;
+  font-weight:300;color:var(--acento);white-space:nowrap}
+.perfil.cerrado .numero{font-size:.8rem;font-family:inherit;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--cerrado)}
+
+.total{border-top:1px solid var(--linea);margin-top:26px;padding-top:18px;
+  font-size:.95rem;color:var(--tinta2)}
+.total strong{color:var(--tinta)}
+.reglas{background:var(--blanco);border:1px solid var(--linea);
+  padding:18px 20px;margin:30px 0 0;font-size:.92rem;line-height:1.6}
+.reglas h3{margin:0 0 10px;font-size:.72rem;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--tinta3)}
+.reglas ul{margin:0;padding-left:19px;color:var(--tinta2)}
+.reglas li{margin-bottom:8px}
+.reglas strong{color:var(--tinta)}
+.error{background:var(--blanco);border:1px solid var(--linea);
+  border-left:3px solid var(--cerrado);padding:18px 20px;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="hoja">
+  <p class="eyebrow">Estudio de valoración afectiva</p>
+  <h1>¿Qué perfiles faltan?</h1>
+  <p class="bajada">Buscá personas de estos perfiles. Los que dicen COMPLETO ya
+    no suman: si traés a alguien de ese grupo, la actividad le va a terminar
+    apenas empiece.</p>
+  <p class="sello-fecha" id="fecha"></p>
+
+  <div id="lista"></div>
+
+  <div class="reglas">
+    <h3>Tres cosas para no perder datos</h3>
+    <ul>
+      <li>Pasá <strong>siempre tu enlace tal cual</strong>, con tu código. No lo
+        edites, no lo acortes y no lo copies de la barra del navegador después
+        de que abrió.</li>
+      <li><strong>Computadora, notebook o tablet.</strong> Desde el teléfono no
+        se puede: la pantalla les va a avisar y no van a poder seguir.</li>
+      <li>Son <strong>15 minutos sin pausar</strong>. Mejor que lo arranquen
+        cuando tengan el rato, no a las corridas.</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+var NOMBRES = {
+  "mujer_40+":    ["Mujeres de 40 años o más", "El perfil más buscado"],
+  "varon_40+":    ["Varones de 40 años o más", "El perfil más buscado"],
+  "varon_18-39":  ["Varones de 18 a 39 años", ""],
+  "mujer_18-39":  ["Mujeres de 18 a 39 años", ""]
+};
+var ORDEN = ["mujer_40+", "varon_40+", "varon_18-39", "mujer_18-39"];
+
+fetch("cupos.json?t=" + Date.now(), { cache: "no-store" })
+  .then(function (r) { return r.json(); })
+  .then(function (c) {
+    document.getElementById("fecha").textContent =
+      "Actualizado el " + c.actualizado;
+
+    var lista = document.getElementById("lista");
+    var total = 0;
+
+    ORDEN.forEach(function (celda) {
+      var fila = (c.celdas || {})[celda] || {};
+      // Lo que falta de un perfil es la suma de lo que falta en los cuatro
+      // grupos: al reclutar no elegis grupo, eso lo decide el sistema.
+      var faltan = ["1","2","3","4"].reduce(function (s, g) {
+        return s + (fila[g] || 0);
+      }, 0);
+      total += faltan;
+
+      var nom = NOMBRES[celda] || [celda, ""];
+      var div = document.createElement("div");
+      div.className = "perfil" + (faltan === 0 ? " cerrado" : "");
+      div.innerHTML =
+        '<div><h2>' + nom[0] + '</h2>' +
+        (faltan > 0 && nom[1] ? '<p class="det">' + nom[1] + '</p>' : '') +
+        (faltan === 0 ? '<p class="det">Ya tenemos los que necesitábamos</p>' : '') +
+        '</div>' +
+        '<div class="numero">' + (faltan === 0 ? "Completo" : "faltan " + faltan) + '</div>';
+      lista.appendChild(div);
+    });
+
+    var t = document.createElement("p");
+    t.className = "total";
+    t.innerHTML = "En total faltan <strong>" + total + "</strong> participantes.";
+    lista.appendChild(t);
+  })
+  .catch(function () {
+    document.getElementById("lista").innerHTML =
+      '<div class="error">No se pudo cargar el estado de los cupos. ' +
+      'Probá recargar la página en un rato.</div>';
+  });
+</script>
+</body>
+</html>

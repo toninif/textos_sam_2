@@ -279,6 +279,14 @@ const gParam  = String(jsPsych.data.getURLVariable("g") ?? "");
 const esLocal = location.protocol === "file:";
 const grupo   = GRUPOS_VALIDOS.includes(gParam) ? gParam : (esLocal ? "1" : null);
 const pcodigo = jsPsych.data.getURLVariable("p") || "sin_codigo";
+
+// Edad, genero y consentimiento llegan desde estudio.html, que es la puerta
+// de entrada: alli se consiente y se decide el grupo segun los cupos.
+// Entrar directo a index.html?g=N saltea esos pasos, asi que no se permite
+// (ver ARRANQUE, al final del archivo).
+const edadURL   = parseInt(jsPsych.data.getURLVariable("edad"), 10);
+const generoURL = jsPsych.data.getURLVariable("genero") || null;
+const consentURL = jsPsych.data.getURLVariable("c") || null;
 const sujeto  = jsPsych.randomization.randomID(10);
 
 // Momento en que la persona abre el estudio, y su huso horario.
@@ -342,7 +350,10 @@ fetch("https://api.ipify.org?format=json")
 
 jsPsych.data.addProperties({
   sujeto: sujeto, grupo: grupo, codigo_participante: pcodigo,
-  set: "S" + grupo, dispositivo: esMovil ? "movil" : "escritorio"
+  set: "S" + grupo, dispositivo: esMovil ? "movil" : "escritorio",
+  // Constancia de que la persona consintio, y cuando. El consentimiento se
+  // presta en estudio.html, asi que sin esta columna no quedaria rastro.
+  fecha_consentimiento: consentURL
 });
 
 // Columnas que no aportan al analisis y ensucian la planilla.
@@ -485,120 +496,9 @@ const timeline = [];
 
 timeline.push({ type: jsPsychPreload, images: IMGS, data: { tarea: "preload" } });
 
-// ── portada: informacion + consentimiento ───────────────────
-timeline.push({
-  type: jsPsychSurveyHtmlForm,
-  preamble: `
-    <p class="eyebrow">Estudio de valoración afectiva</p>
-    <h1>Información para participantes</h1>
-
-    <dl class="ficha">
-      <dt>Duración aproximada</dt><dd>15 minutos</dd>
-    </dl>
-
-    <p class="banda">Información para el participante</p>
-    <div class="info">
-      <p>Se te está invitando a participar de un trabajo de investigación sobre
-        cómo las personas valoran afectivamente diferentes situaciones cuando las
-        leen. Es importante que entiendas por qué se lleva a cabo este estudio, a
-        quiénes involucra y sus posibles consecuencias. Por favor, leé atentamente
-        esta información.</p>
-
-      <h2>¿Cuáles son los propósitos de este estudio?</h2>
-      <p>El estudio busca establecer valores normativos de agrado y activación
-        para un conjunto de textos breves en español rioplatense.</p>
-
-      <h2>¿Quiénes participarán de este estudio?</h2>
-      <p>Participarán personas mayores de 18 años.</p>
-
-      <h2>¿Deberías participar?</h2>
-      <p>Tu participación es voluntaria y anónima. Podés suspender la actividad en
-        el momento en que quieras, sin necesidad de dar explicaciones.</p>
-
-      <h2>¿Qué me pasará si participo de este estudio?</h2>
-      <p>El estudio consiste en responder un cuestionario breve sobre tu estado de
-        ánimo actual y luego leer una serie de situaciones, indicando para cada una
-        cómo te sentirías frente a ellas. El tiempo total de duración es de
-        aproximadamente 15 minutos.</p>
-
-      <h2>¿Qué es lo que necesito hacer yo? ¿Cuáles son mis responsabilidades?</h2>
-      <p>Deberás estar dispuesto a leer con atención cada situación y responder
-        según tu impresión personal. No hay respuestas correctas ni incorrectas.</p>
-
-      <h2>¿Existen posibles riesgos o malestares por participar?</h2>
-      <p>No hay riesgos asociados a la participación. Algunas de las situaciones
-        describen momentos que podrían ser desagradables y eventualmente podrías
-        experimentar desagrado.</p>
-
-      <h2>¿Cuáles son los posibles beneficios por participar?</h2>
-      <p>La información que se obtenga de este estudio podrá ayudar a la mejor
-        comprensión de los procesos emocionales implicados en la lectura y aportar
-        material estandarizado para la investigación en psicología. Los resultados
-        del estudio podrán ser publicados en la literatura científica.</p>
-
-      <h2>¿La información recogida será confidencial?</h2>
-      <p>La información recogida será anónima y confidencial. No habrá registro de
-        tu nombre ni de ningún tipo de dato que te identifique.</p>
-
-      <h2>¿Podré acceder a los resultados de este estudio?</h2>
-      <p>Sí, si lo deseas, al finalizar el estudio completo se te informará sobre
-        los resultados del mismo.</p>
-    </div>
-
-    <p class="banda">Información de contacto</p>
-    <div class="info">
-      <p>La investigadora a cargo es Natalia Irrazabal. Cualquier consulta sobre
-        esta investigación se puede realizar a su e-mail: nirrazabal@psi.uba.ar</p>
-    </div>
-
-    <p class="banda">Confirmá que querés hacer esta encuesta</p>
-    <p class="preconsent">Doy mi consentimiento para participar del proyecto de
-      investigación sobre valoración afectiva de textos. Al aceptar este
-      consentimiento acepto de manera voluntaria y anónima participar en esta
-      investigación. Además, dejo constancia que se me informó:</p>`,
-  html: `
-    <div class="consent">
-      <label class="chk"><input type="checkbox" name="c1" required>
-        <span class="caja">✓</span>
-        <span class="txt">Sobre los procedimientos y propósitos de la investigación.</span></label>
-      <label class="chk"><input type="checkbox" name="c2" required>
-        <span class="caja">✓</span>
-        <span class="txt">Que en cualquier momento puedo desistir de participar,
-          revocando este consentimiento y dejando sin efecto la presente
-          manifestación de voluntad.</span></label>
-      <label class="chk"><input type="checkbox" name="c3" required>
-        <span class="caja">✓</span>
-        <span class="txt">Que se resguardará mi identidad como participante y se
-          tomarán los recaudos necesarios para garantizar la confidencialidad de
-          mis datos, como así también de cualquier otra información que brinde.</span></label>
-      <label class="chk"><input type="checkbox" name="c4" required>
-        <span class="caja">✓</span>
-        <span class="txt">Dejo constancia de haber comprendido que no se me
-          brindará una devolución individual y presto plena conformidad en cuanto
-          a mi participación.</span></label>
-    </div>
-    <p class="aviso-consent" id="avisoConsent"></p>`,
-  button_label: "Comenzar",
-  autocomplete: false,
-  data: { tarea: "consentimiento" },
-  on_load: () => {
-    estilarBoton();
-    const btn = document.querySelector("#jspsych-survey-html-form-next");
-    const cajas = [...document.querySelectorAll(".consent input")];
-    const aviso = document.getElementById("avisoConsent");
-    // Guarda: si el DOM no es el esperado, no deshabilitamos nada. El atributo
-    // required del navegador sigue bloqueando el envio igual.
-    if (!btn || cajas.length === 0 || !aviso) return;
-    const revisar = () => {
-      const faltan = cajas.filter(c => !c.checked).length;
-      btn.disabled = faltan > 0;
-      aviso.textContent = faltan === 0 ? ""
-        : `Marcá las ${faltan} casillas que faltan para continuar.`;
-    };
-    cajas.forEach(c => c.addEventListener("change", revisar));
-    revisar();
-  }
-});
+// ── portada ─────────────────────────────────────────────────
+// El consentimiento informado NO esta aca: se presta en estudio.html,
+// antes de preguntar edad y genero. Ver ARRANQUE al final del archivo.
 
 // ── sociodemograficos ───────────────────────────────────────
 timeline.push({
@@ -609,19 +509,6 @@ timeline.push({
     identificarte. Sirven para describir quiénes participaron.</p>`,
   html: `
     <div class="campos">
-      <p class="preg">¿Cuántos años tenés?</p>
-      <input class="campo" type="number" name="edad" min="18" max="99" required
-             style="width:110px">
-
-      <p class="preg">Género</p>
-      <select class="campo" name="genero" required>
-        <option value="">Elegí una opción</option>
-        <option value="mujer">Mujer</option>
-        <option value="varon">Varón</option>
-        <option value="otro">Otro</option>
-        <option value="nc">Prefiero no responder</option>
-      </select>
-
       <p class="preg">¿Dónde viviste la mayor parte de tu vida hasta los 18 años?</p>
       <select class="campo" name="region" required>
         <option value="">Elegí una opción</option>
@@ -679,7 +566,11 @@ timeline.push({
   // pierden enteras: la planilla sale con rt pero sin edad ni genero.
   on_finish: (d) => {
     Object.assign(d, d.response);
-    d.edad = parseInt(d.response.edad);
+    // Edad y genero ya se preguntaron en estudio.html. Se escriben aca, en
+    // la misma fila que el resto de los sociodemograficos, para que el CSV
+    // mantenga la estructura de siempre y el pipeline de R no cambie.
+    d.edad = edadURL;
+    d.genero = generoURL;
   }
 });
 
@@ -976,10 +867,12 @@ if (esTelefono && !forzarTelefono) {
     'valoración necesitan más espacio para verse completas, y las respuestas ' +
     'no serían comparables con las del resto de los participantes.</p>' +
     '<p>Abrí este mismo enlace desde una <b>computadora, notebook o tablet</b>.</p>');
-} else if (grupo === null) {
-  aviso("El enlace está incompleto",
-    '<p>Falta indicar el grupo. El link tiene que terminar en <code>g1.html</code>, ' +
-    '<code>g2.html</code>, <code>g3.html</code> o <code>g4.html</code>.</p>' +
+} else if (grupo === null || !edadURL || !generoURL) {
+  // Se llego a index.html sin pasar por estudio.html: sin grupo asignado,
+  // sin consentimiento y sin los datos que definen la celda demografica.
+  aviso("Entrá por el enlace del estudio",
+    '<p>Esta página no se abre directamente. Usá el enlace que te pasaron, ' +
+    'que termina en <code>estudio.html</code>.</p>' +
     '<p>Si lo recibiste así, avisale a quien te lo mandó.</p>');
 } else if (misEstimulos.length === 0) {
   aviso("Este grupo todavía no está activo",

@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Valoración afectiva de situaciones</title>
+
+<!-- Mismas fuentes y paleta que index.html: el participante no tiene que
+     notar que son dos archivos distintos. -->
+<link rel="stylesheet" href="fuentes/fuentes.css">
+<style>
+:root{
+  --papel:#EFF0EC;
+  --blanco:#FBFBF9;
+  --tinta:#171A1C;
+  --tinta2:#636B71;
+  --tinta3:#9AA1A5;
+  --linea:#D3D6D0;
+  --acento:#2F6152;
+  --acento-luz:#E3EDE8;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--papel);
+  background-image:
+    linear-gradient(to right,rgba(23,26,28,.035) 1px,transparent 1px),
+    linear-gradient(to bottom,rgba(23,26,28,.035) 1px,transparent 1px);
+  background-size:26px 26px;
+  color:var(--tinta);
+  font-family:Archivo,-apple-system,"Segoe UI",Roboto,sans-serif;
+  font-size:16px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+.envoltura{padding:0 5vw}
+.hoja{max-width:660px;margin:0 auto;padding:8px 0 64px;text-align:left}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+h1{font-family:Newsreader,Georgia,serif;font-weight:300;
+  font-size:clamp(2rem,6.5vw,2.9rem);line-height:1.09;letter-spacing:-.02em;
+  margin:0 0 20px}
+.eyebrow{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--acento);font-weight:600;margin:44px 0 16px}
+.bajada{font-family:Newsreader,Georgia,serif;font-size:1.1rem;line-height:1.62;
+  color:var(--tinta2);margin:0 0 28px;max-width:46ch}
+
+.btn{font-family:inherit;font-weight:600;font-size:.95rem;letter-spacing:.01em;
+  padding:15px 30px;border-radius:2px;border:1px solid var(--tinta);
+  background:var(--tinta);color:var(--papel);cursor:pointer;display:inline-block;
+  transition:transform .12s,box-shadow .12s,opacity .15s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 3px 0 var(--acento)}
+.btn:focus-visible{outline:2px solid var(--acento);outline-offset:3px}
+.btn[disabled]{opacity:.32;cursor:not-allowed}
+.btn[disabled]:hover{transform:none;box-shadow:none}
+
+.ficha{border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);
+  padding:14px 0;margin:0 0 8px}
+.ficha dt{font-size:.66rem;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--tinta3);font-weight:600;margin:0 0 4px}
+.ficha dd{margin:0;font-size:.95rem;font-weight:500}
+.banda{background:var(--tinta);color:var(--papel);font-weight:600;
+  font-size:.82rem;letter-spacing:.09em;text-transform:uppercase;
+  padding:9px 14px;margin:34px 0 16px}
+.info{margin:0 0 20px}
+.info h2{font-size:.95rem;font-weight:600;color:var(--tinta);margin:22px 0 7px}
+.info p{font-size:.96rem;line-height:1.62;color:var(--tinta2);margin:0 0 12px;
+  max-width:62ch}
+.preconsent{font-size:.93rem;line-height:1.6;color:var(--tinta2);margin:0 0 6px}
+.consent{border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);
+  padding:8px 0;margin:0 0 18px}
+.chk{display:flex;gap:13px;align-items:flex-start;padding:14px 2px;cursor:pointer;
+  border-bottom:1px solid var(--linea)}
+.chk:last-child{border-bottom:0}
+.chk input{position:absolute;opacity:0;width:0;height:0}
+.chk .caja{flex:0 0 auto;width:21px;height:21px;margin-top:1px;border-radius:3px;
+  border:1.5px solid var(--tinta3);background:var(--blanco);
+  display:grid;place-items:center;color:transparent;font-size:.8rem;font-weight:700;
+  transition:background .13s,border-color .13s,color .13s}
+.chk:hover .caja{border-color:var(--acento)}
+.chk input:checked ~ .caja{background:var(--acento);border-color:var(--acento);color:#fff}
+.chk input:focus-visible ~ .caja{outline:2px solid var(--acento);outline-offset:3px}
+.chk span.txt{font-size:.93rem;line-height:1.5;color:var(--tinta)}
+.aviso-consent{font-size:.8rem;color:var(--tinta3);margin:0 0 22px;min-height:1.1em}
+
+.campos{margin:0 0 8px}
+.preg{font-size:.98rem;font-weight:500;color:var(--tinta);margin:26px 0 8px}
+.campos > .preg:first-child{margin-top:0}
+.campo{font:inherit;padding:10px 12px;border:1px solid var(--linea);
+  background:var(--blanco);border-radius:2px;display:block;max-width:340px}
+.campo:focus-visible{outline:2px solid var(--acento);outline-offset:1px}
+
+.cierre{text-align:center;padding:60px 0 24px}
+.sello{width:60px;height:60px;margin:0 auto 26px;border:1.5px solid var(--acento);
+  border-radius:50%;display:grid;place-items:center;color:var(--acento);font-size:1.5rem}
+.cierre .bajada{margin-inline:auto}
+.alerta{background:var(--blanco);border:1px solid var(--linea);
+  border-left:3px solid #B4741F;padding:20px 22px;margin:60px auto;
+  max-width:560px;line-height:1.6}
+.alerta h3{margin:0 0 10px;font-size:1.05rem}
+
+.oculto{display:none}
+</style>
+</head>
+
+<body>
+<div class="envoltura"><div class="hoja" id="hoja">
+
+<!-- ══ 1. CONSENTIMIENTO ══════════════════════════════════════ -->
+<section id="pasoConsent">
+  <p class="eyebrow">Estudio de valoración afectiva</p>
+  <h1>Información para participantes</h1>
+
+  <dl class="ficha">
+    <dt>Duración aproximada</dt><dd>15 minutos</dd>
+  </dl>
+
+  <p class="banda">Información para el participante</p>
+  <div class="info">
+    <p>Se te está invitando a participar de un trabajo de investigación sobre
+      cómo las personas valoran afectivamente diferentes situaciones cuando las
+      leen. Es importante que entiendas por qué se lleva a cabo este estudio, a
+      quiénes involucra y sus posibles consecuencias. Por favor, leé atentamente
+      esta información.</p>
+
+    <h2>¿Cuáles son los propósitos de este estudio?</h2>
+    <p>El estudio busca establecer valores normativos de agrado y activación
+      para un conjunto de textos breves en español rioplatense.</p>
+
+    <h2>¿Quiénes participarán de este estudio?</h2>
+    <p>Participarán personas mayores de 18 años.</p>
+
+    <h2>¿Deberías participar?</h2>
+    <p>Tu participación es voluntaria y anónima. Podés suspender la actividad en
+      el momento en que quieras, sin necesidad de dar explicaciones.</p>
+
+    <h2>¿Qué me pasará si participo de este estudio?</h2>
+    <p>El estudio consiste en responder un cuestionario breve sobre tu estado de
+      ánimo actual y luego leer una serie de situaciones, indicando para cada una
+      cómo te sentirías frente a ellas. El tiempo total de duración es de
+      aproximadamente 15 minutos.</p>
+
+    <p><strong>Antes de comenzar se te preguntará tu edad y tu género.</strong>
+      El estudio necesita un número determinado de participantes de cada franja
+      de edad y género; si esa franja ya está completa, la actividad terminará
+      en ese momento y no será necesario que respondas el resto.</p>
+
+    <h2>¿Qué es lo que necesito hacer yo? ¿Cuáles son mis responsabilidades?</h2>
+    <p>Deberás estar dispuesto a leer con atención cada situación y responder
+      según tu impresión personal. No hay respuestas correctas ni incorrectas.</p>
+
+    <h2>¿Existen posibles riesgos o malestares por participar?</h2>
+    <p>No hay riesgos asociados a la participación. Algunas de las situaciones
+      describen momentos que podrían ser desagradables y eventualmente podrías
+      experimentar desagrado.</p>
+
+    <h2>¿Cuáles son los posibles beneficios por participar?</h2>
+    <p>La información que se obtenga de este estudio podrá ayudar a la mejor
+      comprensión de los procesos emocionales implicados en la lectura y aportar
+      material estandarizado para la investigación en psicología. Los resultados
+      del estudio podrán ser publicados en la literatura científica.</p>
+
+    <h2>¿La información recogida será confidencial?</h2>
+    <p>La información recogida será anónima y confidencial. No habrá registro de
+      tu nombre ni de ningún tipo de dato que te identifique.</p>
+
+    <h2>¿Podré acceder a los resultados de este estudio?</h2>
+    <p>Sí, si lo deseas, al finalizar el estudio completo se te informará sobre
+      los resultados del mismo.</p>
+  </div>
+
+  <p class="banda">Información de contacto</p>
+  <div class="info">
+    <p>La investigadora a cargo es Natalia Irrazabal. Cualquier consulta sobre
+      esta investigación se puede realizar a su e-mail: nirrazabal@psi.uba.ar</p>
+  </div>
+
+  <p class="banda">Confirmá que querés hacer esta encuesta</p>
+  <p class="preconsent">Doy mi consentimiento para participar del proyecto de
+    investigación sobre valoración afectiva de textos. Al aceptar este
+    consentimiento acepto de manera voluntaria y anónima participar en esta
+    investigación. Además, dejo constancia que se me informó:</p>
+
+  <div class="consent">
+    <label class="chk"><input type="checkbox" name="c1">
+      <span class="caja">✓</span>
+      <span class="txt">Sobre los procedimientos y propósitos de la investigación.</span></label>
+    <label class="chk"><input type="checkbox" name="c2">
+      <span class="caja">✓</span>
+      <span class="txt">Que en cualquier momento puedo desistir de participar,
+        revocando este consentimiento y dejando sin efecto la presente
+        manifestación de voluntad.</span></label>
+    <label class="chk"><input type="checkbox" name="c3">
+      <span class="caja">✓</span>
+      <span class="txt">Que se resguardará mi identidad como participante y se
+        tomarán los recaudos necesarios para garantizar la confidencialidad de
+        mis datos, como así también de cualquier otra información que brinde.</span></label>
+    <label class="chk"><input type="checkbox" name="c4">
+      <span class="caja">✓</span>
+      <span class="txt">Dejo constancia de haber comprendido que no se me
+        brindará una devolución individual y presto plena conformidad en cuanto
+        a mi participación.</span></label>
+  </div>
+  <p class="aviso-consent" id="avisoConsent"></p>
+  <button class="btn" id="btnConsent" disabled>Continuar</button>
+</section>
+
+<!-- ══ 2. EDAD Y GENERO ═══════════════════════════════════════ -->
+<section id="pasoDatos" class="oculto">
+  <p class="eyebrow">Antes de empezar</p>
+  <h1>Dos datos y arrancamos</h1>
+  <p class="bajada">Ninguno de los dos permite identificarte.</p>
+
+  <div class="campos">
+    <p class="preg">¿Cuántos años tenés?</p>
+    <input class="campo" type="number" id="edad" min="18" max="99"
+           style="width:110px" inputmode="numeric">
+
+    <p class="preg">Género</p>
+    <select class="campo" id="genero">
+      <option value="">Elegí una opción</option>
+      <option value="mujer">Mujer</option>
+      <option value="varon">Varón</option>
+      <option value="otro">Otro</option>
+      <option value="nc">Prefiero no responder</option>
+    </select>
+  </div>
+  <p class="aviso-consent" id="avisoDatos"></p>
+  <button class="btn" id="btnDatos">Continuar</button>
+</section>
+
+<!-- ══ 3. PANTALLAS DE SALIDA ═════════════════════════════════ -->
+<section id="pasoGracias" class="oculto">
+  <div class="cierre">
+    <div class="sello">✓</div>
+    <h1>Gracias por tu tiempo</h1>
+    <p class="bajada">Ya completamos el número de participantes que necesitábamos
+      con tu perfil, así que no hace falta que sigas. Te agradecemos igual la
+      buena predisposición.</p>
+  </div>
+</section>
+
+<section id="pasoEspera" class="oculto">
+  <div class="cierre">
+    <h1>Preparando el estudio</h1>
+    <p class="bajada">Un momento...</p>
+  </div>
+</section>
+
+</div></div>
+
+<script>
+// =============================================================
+// PUERTA DE ENTRADA DEL ESTUDIO
+//
+// Orden, y el orden importa:
+//   1. consentimiento   (nada se pregunta antes de que la persona acepte)
+//   2. edad y genero    (los dos datos que definen la celda demografica)
+//   3. cupos            (si la celda esta llena -> agradecer y terminar)
+//   4. sorteo del grupo ENTRE LOS QUE TODAVIA TIENEN LUGAR en esa celda
+//   5. redireccion a index.html con todo en la URL
+//
+// El grupo se decide ACA y no adentro del experimento porque index.html
+// arma el timeline entero al cargar: necesita saber el grupo antes de
+// empezar, no a mitad de camino.
+// =============================================================
+
+var PARAMS = new URLSearchParams(location.search);
+var GRUPOS = ["1", "2", "3", "4"];
+
+// ── bloqueo de telefonos ────────────────────────────────────
+// Mismo criterio que index.html: se permiten tablets, no telefonos.
+var UA = navigator.userAgent;
+var esTelefono =
+  /iPhone|iPod/i.test(UA) ||
+  (/Android/i.test(UA) && /Mobile/i.test(UA)) ||
+  /Windows Phone|BlackBerry|BB10|webOS/i.test(UA) ||
+  (navigator.maxTouchPoints > 1 &&
+   Math.min(window.screen.width, window.screen.height) < 600);
+
+function alerta(titulo, cuerpo) {
+  document.getElementById("hoja").innerHTML =
+    '<div class="alerta"><h3>' + titulo + '</h3>' + cuerpo + '</div>';
+}
+
+if (esTelefono && PARAMS.get("forzar") !== "1") {
+  alerta("Necesitás una pantalla más grande",
+    '<p>Este estudio no se puede responder desde un teléfono: las escalas de ' +
+    'valoración necesitan más espacio para verse completas, y las respuestas ' +
+    'no serían comparables con las del resto de los participantes.</p>' +
+    '<p>Abrí este mismo enlace desde una <b>computadora, notebook o tablet</b>.</p>');
+} else {
+  arrancar();
+}
+
+function mostrar(id) {
+  ["pasoConsent", "pasoDatos", "pasoGracias", "pasoEspera"].forEach(function (s) {
+    document.getElementById(s).classList.toggle("oculto", s !== id);
+  });
+  window.scrollTo(0, 0);
+}
+
+function arrancar() {
+
+  // ── paso 1: consentimiento ────────────────────────────────
+  var cajas = [].slice.call(document.querySelectorAll(".consent input"));
+  var btnConsent = document.getElementById("btnConsent");
+  var avisoConsent = document.getElementById("avisoConsent");
+
+  function revisarConsent() {
+    var faltan = cajas.filter(function (c) { return !c.checked; }).length;
+    btnConsent.disabled = faltan > 0;
+    avisoConsent.textContent = faltan === 0 ? ""
+      : "Marcá las " + faltan + " casillas que faltan para continuar.";
+  }
+  cajas.forEach(function (c) { c.addEventListener("change", revisarConsent); });
+  revisarConsent();
+
+  var fechaConsent = null;
+  btnConsent.addEventListener("click", function () {
+    if (btnConsent.disabled) return;
+    fechaConsent = new Date().toISOString();   // queda registrado en los datos
+    mostrar("pasoDatos");
+  });
+
+  // ── paso 2: edad y genero ─────────────────────────────────
+  var btnDatos = document.getElementById("btnDatos");
+  var avisoDatos = document.getElementById("avisoDatos");
+
+  btnDatos.addEventListener("click", function () {
+    var edad = parseInt(document.getElementById("edad").value, 10);
+    var genero = document.getElementById("genero").value;
+
+    if (!edad || edad < 18 || edad > 99) {
+      avisoDatos.textContent = "Escribí tu edad (entre 18 y 99).";
+      return;
+    }
+    if (!genero) {
+      avisoDatos.textContent = "Elegí una opción de género.";
+      return;
+    }
+    avisoDatos.textContent = "";
+    mostrar("pasoEspera");
+    decidir(edad, genero, fechaConsent);
+  });
+}
+
+// ── celda demografica ───────────────────────────────────────
+// "otro" se cuenta junto con varon (criterio del equipo).
+// "nc" no entra en ninguna celda: esas personas pasan siempre, con
+// sorteo libre entre los cuatro grupos. Son pocas y no queremos
+// rechazar a nadie por no querer declarar su genero.
+function celdaDe(edad, genero) {
+  if (genero === "nc") return null;
+  var g = (genero === "otro") ? "varon" : genero;
+  var e = (edad >= 40) ? "40+" : "18-39";
+  return g + "_" + e;
+}
+
+function alAzar(lista) {
+  return lista[Math.floor(Math.random() * lista.length)];
+}
+
+// ── paso 3 y 4: cupos y sorteo ──────────────────────────────
+function decidir(edad, genero, fechaConsent) {
+  var forzado = PARAMS.get("forzar_grupo");   // toma dirigida: saltea los cupos
+  if (GRUPOS.indexOf(forzado) !== -1) {
+    return irAlEstudio(forzado, edad, genero, fechaConsent);
+  }
+
+  var celda = celdaDe(edad, genero);
+  if (celda === null) {
+    return irAlEstudio(alAzar(GRUPOS), edad, genero, fechaConsent);
+  }
+
+  // cache-busting: sin esto el navegador puede quedarse con un cupos.json
+  // viejo y mandar gente a celdas que ya se cerraron.
+  fetch("cupos.json?t=" + Date.now(), { cache: "no-store" })
+    .then(function (r) { return r.json(); })
+    .then(function (cupos) {
+      var fila = (cupos.celdas || {})[celda] || {};
+      var conLugar = GRUPOS.filter(function (g) { return (fila[g] || 0) > 0; });
+
+      if (conLugar.length === 0) return mostrar("pasoGracias");
+      irAlEstudio(alAzar(conLugar), edad, genero, fechaConsent);
+    })
+    .catch(function () {
+      // Si cupos.json no esta o falla la red, NUNCA se bloquea a nadie:
+      // se sortea libre entre los cuatro. Perder un participante por un
+      // archivo caido es peor que desbalancear un poco una celda.
+      irAlEstudio(alAzar(GRUPOS), edad, genero, fechaConsent);
+    });
+}
+
+// ── paso 5: al experimento ──────────────────────────────────
+function irAlEstudio(grupo, edad, genero, fechaConsent) {
+  var q = new URLSearchParams();
+  q.set("g", grupo);
+  q.set("p", PARAMS.get("p") || "sin_codigo");
+  q.set("edad", edad);
+  q.set("genero", genero);
+  if (fechaConsent) q.set("c", fechaConsent);
+  if (PARAMS.get("forzar") === "1") q.set("forzar", "1");
+
+  // replace y no href: el boton "atras" no devuelve a la puerta de entrada.
+  location.replace("index.html?" + q.toString());
+}
+</script>
+</body>
+</html>
