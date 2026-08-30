@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tu avance · Estudio de valoración afectiva</title>
+<link rel="stylesheet" href="fuentes/fuentes.css">
+<style>
+:root{
+  --papel:#EFF0EC; --blanco:#FBFBF9; --tinta:#171A1C; --tinta2:#636B71;
+  --tinta3:#9AA1A5; --linea:#D3D6D0; --acento:#2F6152; --acento-luz:#E3EDE8;
+  --cerrado:#B4741F;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--papel);color:var(--tinta);
+  font-family:Archivo,-apple-system,"Segoe UI",Roboto,sans-serif;
+  font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.hoja{max-width:520px;margin:0 auto;padding:8px 5vw 64px}
+h1{font-family:Newsreader,Georgia,serif;font-weight:300;
+  font-size:clamp(1.9rem,6vw,2.6rem);line-height:1.1;margin:0 0 10px}
+.eyebrow{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--acento);font-weight:600;margin:44px 0 16px}
+.bajada{font-family:Newsreader,Georgia,serif;font-size:1.05rem;line-height:1.6;
+  color:var(--tinta2);margin:0 0 26px;max-width:46ch}
+
+.total{display:flex;justify-content:space-between;align-items:baseline;
+  border-bottom:1px solid var(--linea);padding-bottom:14px;margin:0 0 20px}
+.total .num{font-family:Newsreader,Georgia,serif;font-weight:300;font-size:1.8rem}
+.total .num small{font-size:1rem;font-weight:400;color:var(--tinta2)}
+.total .rot{font-size:.72rem;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--tinta3);font-weight:600}
+
+.perfil{background:var(--blanco);border:1px solid var(--linea);
+  border-left:3px solid var(--acento);padding:16px 18px;margin:0 0 10px}
+.perfil.completo{border-left-color:var(--acento)}
+.perfil-cab{display:flex;justify-content:space-between;align-items:baseline;
+  margin:0 0 9px}
+.perfil-nom{font-size:.92rem;font-weight:600}
+.perfil-num{font-family:Newsreader,Georgia,serif;font-size:1.15rem}
+.perfil-num small{font-family:inherit;font-size:.8rem;font-weight:400;color:var(--tinta2)}
+.barra{position:relative;height:7px;border-radius:4px;background:var(--linea);
+  overflow:hidden}
+.barra i{position:absolute;inset:0 auto 0 0;background:var(--acento);
+  border-radius:4px 0 0 4px}
+
+.otros{font-size:.85rem;color:var(--tinta2);margin:14px 0 0}
+.msg-completo{color:var(--acento);font-weight:600;font-size:.95rem;margin:22px 0 0}
+.sello-fecha{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--tinta3);font-weight:600;margin:22px 0 0}
+.error{background:var(--blanco);border:1px solid var(--linea);
+  border-left:3px solid var(--cerrado);padding:18px 20px;line-height:1.6}
+.error h3{margin:0 0 8px;font-size:1rem}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="hoja">
+  <p class="eyebrow">Estudio de valoración afectiva</p>
+  <h1>Tu avance</h1>
+  <p class="bajada" id="bajada">Cargando...</p>
+  <div id="contenido"></div>
+</div>
+
+<script>
+// Lee el mismo ?p= que usa estudio.html para identificar al alumno, y
+// muestra solo el JSON de ese codigo (avance/<codigo>.json). No hay nada
+// de calculo aca: la cuenta de casos validos por perfil la hace
+// generar_avance_alumnos.R y este archivo solo se limita a mostrarla.
+var NOMBRES_PERFIL = {
+  "varon_18-39": "Varón, 18 a 39 años",
+  "varon_40+":   "Varón, 40 años o más",
+  "mujer_40+":   "Mujer, 40 años o más"
+};
+var ORDEN_PERFIL = ["varon_18-39", "varon_40+", "mujer_40+"];
+
+var codigo = new URLSearchParams(location.search).get("p");
+var bajada = document.getElementById("bajada");
+var contenido = document.getElementById("contenido");
+
+function error(titulo, cuerpo) {
+  bajada.textContent = "";
+  contenido.innerHTML =
+    '<div class="error"><h3>' + titulo + '</h3><p>' + cuerpo + '</p></div>';
+}
+
+if (!codigo) {
+  error("Falta tu código",
+    "Entrá con el mismo enlace que usás para invitar participantes, el que " +
+    "termina en <code>?p=tu_código</code>.");
+} else {
+  bajada.textContent = "Necesitás 5 casos válidos de cada uno de estos tres " +
+    "perfiles. Un caso de otro perfil (por ejemplo, mujer de 18 a 39) también " +
+    "vale para el estudio, pero no suma acá.";
+  // cache-busting: sin esto el navegador puede mostrar un avance viejo.
+  fetch("avance/" + encodeURIComponent(codigo) + ".json?t=" + Date.now(),
+        { cache: "no-store" })
+    .then(function (r) { if (!r.ok) throw 0; return r.json(); })
+    .then(mostrar)
+    .catch(function () {
+      error("Todavía no hay datos para tu código",
+        "Puede ser que el archivo no se haya actualizado desde tu último " +
+        "envío, o que el enlace esté mal escrito. Probá de nuevo más tarde.");
+    });
+}
+
+function mostrar(d) {
+  var completo = d.total_validos >= d.total_meta;
+
+  var filas = ORDEN_PERFIL.map(function (p) {
+    var c = d.celdas[p] || { validos: 0, meta: 5 };
+    var pct = Math.min(100, Math.round((c.validos / c.meta) * 100));
+    var ok = c.validos >= c.meta;
+    return '<div class="perfil' + (ok ? ' completo' : '') + '">' +
+        '<div class="perfil-cab">' +
+          '<span class="perfil-nom">' + (NOMBRES_PERFIL[p] || p) + '</span>' +
+          '<span class="perfil-num">' + c.validos + ' <small>/ ' + c.meta + '</small></span>' +
+        '</div>' +
+        '<div class="barra"><i style="width:' + pct + '%"></i></div>' +
+      '</div>';
+  }).join("");
+
+  var notaOtros = d.otros > 0
+    ? '<p class="otros">+ ' + d.otros + ' de otros perfiles (no cuentan para la meta).</p>'
+    : "";
+
+  contenido.innerHTML =
+    '<div class="total">' +
+      '<span class="rot">Total válidos</span>' +
+      '<span class="num">' + d.total_validos + ' <small>/ ' + d.total_meta + '</small></span>' +
+    '</div>' +
+    filas + notaOtros +
+    (completo
+      ? '<p class="msg-completo">Completaste los tres perfiles. ¡Gracias!</p>'
+      : "") +
+    '<p class="sello-fecha">Actualizado el ' + d.actualizado + '</p>';
+}
+</script>
+</body>
+</html>
