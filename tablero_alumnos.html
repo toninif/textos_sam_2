@@ -90,17 +90,16 @@ if (!codigo) {
     "termina en <code>?p=tu_código</code>.");
 } else {
   bajada.textContent = "Necesitás 5 casos válidos de cada uno de estos tres " +
-    "perfiles. Un caso de otro perfil (por ejemplo, mujer de 18 a 39) también " +
-    "vale para el estudio, pero no suma acá.";
+    "perfiles.";
   // cache-busting: sin esto el navegador puede mostrar un avance viejo.
   fetch("avance/" + encodeURIComponent(codigo) + ".json?t=" + Date.now(),
         { cache: "no-store" })
     .then(function (r) { if (!r.ok) throw 0; return r.json(); })
     .then(mostrar)
     .catch(function () {
-      error("Todavía no hay datos para tu código",
+      error("Todavía no hay datos.",
         "Puede ser que el archivo no se haya actualizado desde tu último " +
-        "envío, o que el enlace esté mal escrito. Probá de nuevo más tarde.");
+        "envío. Probá de nuevo más tarde.");
     });
 }
 
