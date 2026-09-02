@@ -1,12 +1,1 @@
-{
-  "codigo": "alumno01",
-  "actualizado": "2026-08-29",
-  "celdas": {
-    "varon_18-39": { "validos": 0, "meta": 5 },
-    "varon_40+":   { "validos": 0, "meta": 5 },
-    "mujer_40+":   { "validos": 0, "meta": 5 }
-  },
-  "otros": 0,
-  "total_validos": 0,
-  "total_meta": 15
-}
+{"codigo":"alumno01","actualizado":"2026-09-01","celdas":{"varon_18-39":{"validos":2,"meta":5},"varon_40+":{"validos":0,"meta":5},"mujer_40+":{"validos":1,"meta":5}},"otros":0,"total_validos":3,"total_meta":15}
