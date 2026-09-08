@@ -109,5 +109,22 @@ walk2(alumnos$codigo, resumen$t, function(codigo, t) {
   )
 })
 
+# Un resumen unico para el tablero personal. Incluye solamente el avance
+# agregado por alumno; los datos crudos siguen quedando en data_raw/.
+tablero <- list(
+  actualizado = hoy,
+  meta_celda = META_CELDA,
+  total_meta = META_CELDA * length(PERFILES),
+  perfiles = PERFILES,
+  alumnos = pmap(list(alumnos$codigo, alumnos$apellido, alumnos$nombre, resumen$t),
+    function(codigo, apellido, nombre, t) {
+      list(codigo = codigo, apellido = apellido, nombre = nombre,
+           celdas = t$celdas, otros = t$otros,
+           total_validos = t$total_validos, total_meta = t$total_meta)
+    })
+)
+
+write_json(tablero, file.path(SALIDA, "resumen.json"), auto_unbox = TRUE)
+
 cat("\nEscritos", nrow(alumnos), "archivos en", SALIDA,
-    "- commitealos para que tablero_alumnos.html los vea.\n")
+    "y el resumen para tablero_docente.html - commitealos para que los tableros los vean.\n")
