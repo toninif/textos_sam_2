@@ -37,8 +37,11 @@ h2{font-size:1.8rem;line-height:1.15;margin:0}
   color:var(--tinta3);font-weight:600;margin-bottom:5px}
 .dato strong{font-family:Newsreader,Georgia,serif;font-size:2rem;line-height:1;font-weight:300}
 .tabla{width:100%;border-collapse:collapse;background:var(--blanco);border:1px solid var(--linea)}
-.tabla th{font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--tinta3);
-  font-weight:600;text-align:left;padding:13px 16px;border-bottom:1px solid var(--linea)}
+.tabla th{padding:0;border-bottom:1px solid var(--linea)}
+.tabla th button{width:100%;border:0;background:transparent;padding:13px 16px;color:var(--tinta3);
+  font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;font-weight:600;text-align:left;
+  cursor:pointer;white-space:nowrap}.tabla th button:hover,.tabla th button:focus-visible{color:var(--acento)}
+.tabla th button.activo{color:var(--tinta)}.flecha{display:inline-block;margin-left:4px;font-size:.8rem}
 .tabla td{padding:14px 16px;border-bottom:1px solid var(--linea);vertical-align:middle}
 .tabla tr:last-child td{border-bottom:0}
 .tabla tbody tr{cursor:pointer}
@@ -96,6 +99,7 @@ var ORDEN_PERFIL = ["varon_18-39", "varon_40+", "mujer_40+"];
 var datos;
 var selector = document.getElementById("alumno");
 var contenido = document.getElementById("contenido");
+var ordenTabla = { campo: "nombre", direccion: "asc" };
 
 function escapeHtml(valor) {
   return String(valor).replace(/[&<>"']/g, function (c) {
@@ -118,13 +122,42 @@ function estaCompleto(alumno) {
   });
 }
 
+function valorOrden(alumno, campo) {
+  if (ORDEN_PERFIL.indexOf(campo) !== -1) return celda(alumno, campo).validos;
+  if (campo === "total") return alumno.total_validos;
+  if (campo === "estado") return estaCompleto(alumno) ? 1 : 0;
+  return nombreCompleto(alumno);
+}
+
+function alumnosOrdenados(alumnos) {
+  var campo = ordenTabla.campo;
+  var direccion = ordenTabla.direccion === "asc" ? 1 : -1;
+  return alumnos.slice().sort(function (a, b) {
+    var va = valorOrden(a, campo);
+    var vb = valorOrden(b, campo);
+    var resultado = typeof va === "string"
+      ? va.localeCompare(vb, "es")
+      : va - vb;
+    return resultado === 0 ? nombreCompleto(a).localeCompare(nombreCompleto(b), "es") : resultado * direccion;
+  });
+}
+
+function encabezado(etiqueta, campo) {
+  var activo = ordenTabla.campo === campo;
+  var flecha = activo ? '<span class="flecha" aria-hidden="true">' +
+    (ordenTabla.direccion === "asc" ? "↑" : "↓") + '</span>' : '';
+  return '<th aria-sort="' + (activo ? (ordenTabla.direccion === "asc" ? "ascending" : "descending") : "none") +
+    '"><button type="button" class="' + (activo ? "activo" : "") + '" data-ordenar="' + campo + '">' +
+    etiqueta + flecha + '</button></th>';
+}
+
 function mostrarResumen() {
   var alumnos = datos.alumnos || [];
   var completos = alumnos.filter(function (a) {
     return estaCompleto(a);
   }).length;
   var validos = alumnos.reduce(function (suma, a) { return suma + a.total_validos; }, 0);
-  var filas = alumnos.map(function (a) {
+  var filas = alumnosOrdenados(alumnos).map(function (a) {
     var terminado = estaCompleto(a);
     var celdas = ORDEN_PERFIL.map(function (p) {
       var c = celda(a, p);
@@ -143,9 +176,15 @@ function mostrarResumen() {
     '<div class="resumen"><div class="dato"><span>Alumnos</span><strong>' + alumnos.length +
     '</strong></div><div class="dato"><span>Completaron la meta</span><strong>' + completos +
     '</strong></div><div class="dato"><span>Casos válidos</span><strong>' + validos +
-    '</strong></div></div><table class="tabla"><thead><tr><th>Alumno</th><th>Total</th>' +
-    '<th>Varón 18–39</th><th>Varón 40+</th><th>Mujer 40+</th><th>Estado</th></tr></thead>' +
+    '</strong></div></div><table class="tabla"><thead><tr>' +
+    encabezado("Alumno", "nombre") + encabezado("Total", "total") +
+    encabezado("Varón 18–39", "varon_18-39") + encabezado("Varón 40+", "varon_40+") +
+    encabezado("Mujer 40+", "mujer_40+") + encabezado("Estado", "estado") +
+    '</tr></thead>' +
     '<tbody>' + filas + '</tbody></table>';
+  contenido.querySelectorAll("[data-ordenar]").forEach(function (boton) {
+    boton.addEventListener("click", function () { ordenarPor(boton.dataset.ordenar); });
+  });
   contenido.querySelectorAll("tbody tr").forEach(function (fila) {
     function abrir() { seleccionar(fila.dataset.codigo); }
     fila.addEventListener("click", abrir);
@@ -153,6 +192,16 @@ function mostrarResumen() {
       if (e.key === "Enter" || e.key === " ") { e.preventDefault(); abrir(); }
     });
   });
+}
+
+function ordenarPor(campo) {
+  if (ordenTabla.campo === campo) {
+    ordenTabla.direccion = ordenTabla.direccion === "asc" ? "desc" : "asc";
+  } else {
+    ordenTabla.campo = campo;
+    ordenTabla.direccion = campo === "nombre" ? "asc" : "desc";
+  }
+  mostrarResumen();
 }
 
 function mostrarAlumno(codigo) {
