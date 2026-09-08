@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tablero de alumnos · Estudio de valoración afectiva</title>
+<link rel="stylesheet" href="fuentes/fuentes.css">
+<style>
+:root{
+  --papel:#EFF0EC; --blanco:#FBFBF9; --tinta:#171A1C; --tinta2:#636B71;
+  --tinta3:#9AA1A5; --linea:#D3D6D0; --acento:#2F6152; --acento-luz:#E3EDE8;
+  --cerrado:#B4741F;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--papel);color:var(--tinta);
+  font-family:Archivo,-apple-system,"Segoe UI",Roboto,sans-serif;
+  font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button,select{font:inherit}
+.hoja{max-width:1040px;margin:0 auto;padding:8px 5vw 64px}
+h1,h2{font-family:Newsreader,Georgia,serif;font-weight:300}
+h1{font-size:clamp(2rem,5vw,3rem);line-height:1.1;margin:0 0 10px}
+h2{font-size:1.8rem;line-height:1.15;margin:0}
+.eyebrow{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--acento);font-weight:600;margin:44px 0 16px}
+.bajada{font-family:Newsreader,Georgia,serif;font-size:1.08rem;line-height:1.6;
+  color:var(--tinta2);margin:0;max-width:56ch}
+.sello-fecha{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--tinta3);font-weight:600;margin:10px 0 26px}
+.selector{display:flex;align-items:center;gap:12px;background:var(--blanco);
+  border:1px solid var(--linea);padding:14px 16px;margin-bottom:24px}
+.selector label{font-size:.8rem;font-weight:600;color:var(--tinta2);white-space:nowrap}
+.selector select{width:100%;border:0;background:transparent;color:var(--tinta);outline:0}
+.resumen{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:0 0 26px}
+.dato{background:var(--blanco);border:1px solid var(--linea);padding:16px 18px}
+.dato span{display:block;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--tinta3);font-weight:600;margin-bottom:5px}
+.dato strong{font-family:Newsreader,Georgia,serif;font-size:2rem;line-height:1;font-weight:300}
+.tabla{width:100%;border-collapse:collapse;background:var(--blanco);border:1px solid var(--linea)}
+.tabla th{font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--tinta3);
+  font-weight:600;text-align:left;padding:13px 16px;border-bottom:1px solid var(--linea)}
+.tabla td{padding:14px 16px;border-bottom:1px solid var(--linea);vertical-align:middle}
+.tabla tr:last-child td{border-bottom:0}
+.tabla tbody tr{cursor:pointer}
+.tabla tbody tr:hover{background:var(--acento-luz)}
+.nombre{font-weight:600}.codigo{font-size:.75rem;color:var(--tinta3);margin-top:2px}
+.progreso{white-space:nowrap}.progreso strong{font-family:Newsreader,Georgia,serif;font-size:1.35rem;font-weight:300}
+.celda{font-size:.85rem;white-space:nowrap}.celda.ok{color:var(--acento);font-weight:600}
+.estado{font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;font-weight:600;color:var(--cerrado)}
+.estado.ok{color:var(--acento)}
+.detalle-cab{display:flex;justify-content:space-between;align-items:start;gap:20px;
+  border-bottom:1px solid var(--linea);padding-bottom:18px;margin-bottom:20px}
+.volver{border:1px solid var(--linea);background:var(--blanco);padding:8px 11px;
+  color:var(--tinta);cursor:pointer;white-space:nowrap}.volver:hover{background:var(--acento-luz)}
+.total{font-family:Newsreader,Georgia,serif;font-size:2.1rem;line-height:1;font-weight:300;
+  white-space:nowrap}.total small{font-family:Archivo,sans-serif;font-size:.85rem;font-weight:400;color:var(--tinta2)}
+.perfiles{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.perfil{background:var(--blanco);border:1px solid var(--linea);border-left:3px solid var(--acento);
+  padding:16px 18px}.perfil.incompleto{border-left-color:var(--cerrado)}
+.perfil-nom{display:block;font-size:.88rem;font-weight:600;min-height:44px}
+.perfil-num{display:block;font-family:Newsreader,Georgia,serif;font-size:1.8rem;font-weight:300;margin:8px 0}
+.perfil-num small{font-family:Archivo,sans-serif;font-size:.8rem;font-weight:400;color:var(--tinta2)}
+.barra{height:7px;border-radius:4px;background:var(--linea);overflow:hidden}.barra i{display:block;
+  height:100%;background:var(--acento)}.perfil.incompleto .barra i{background:var(--cerrado)}
+.nota{font-size:.9rem;color:var(--tinta2);margin:18px 0 0}
+.error{background:var(--blanco);border:1px solid var(--linea);border-left:3px solid var(--cerrado);
+  padding:18px 20px;line-height:1.6}
+@media(max-width:700px){.tabla th:nth-child(3),.tabla td:nth-child(3),.tabla th:nth-child(4),
+  .tabla td:nth-child(4){display:none}.perfiles{grid-template-columns:1fr}.perfil-nom{min-height:0}}
+@media(max-width:460px){.resumen{grid-template-columns:1fr}.detalle-cab{align-items:flex-start}.total{font-size:1.7rem}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main class="hoja">
+  <p class="eyebrow">Uso personal · Estudio de valoración afectiva</p>
+  <h1>Tablero de alumnos</h1>
+  <p class="bajada" id="bajada">Cargando los avances...</p>
+  <p class="sello-fecha" id="fecha"></p>
+  <div class="selector">
+    <label for="alumno">Ver</label>
+    <select id="alumno" aria-label="Seleccionar alumno">
+      <option value="">Tablero completo</option>
+    </select>
+  </div>
+  <section id="contenido" aria-live="polite"></section>
+</main>
+
+<script>
+var NOMBRES_PERFIL = {
+  "varon_18-39": "Varón, 18 a 39 años",
+  "varon_40+": "Varón, 40 años o más",
+  "mujer_40+": "Mujer, 40 años o más"
+};
+var ORDEN_PERFIL = ["varon_18-39", "varon_40+", "mujer_40+"];
+var datos;
+var selector = document.getElementById("alumno");
+var contenido = document.getElementById("contenido");
+
+function escapeHtml(valor) {
+  return String(valor).replace(/[&<>"']/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+  });
+}
+
+function nombreCompleto(alumno) {
+  return alumno.apellido + ", " + alumno.nombre;
+}
+
+function celda(alumno, perfil) {
+  return (alumno.celdas || {})[perfil] || { validos: 0, meta: datos.meta_celda || 5 };
+}
+
+function estaCompleto(alumno) {
+  return ORDEN_PERFIL.every(function (perfil) {
+    var c = celda(alumno, perfil);
+    return c.validos >= c.meta;
+  });
+}
+
+function mostrarResumen() {
+  var alumnos = datos.alumnos || [];
+  var completos = alumnos.filter(function (a) {
+    return estaCompleto(a);
+  }).length;
+  var validos = alumnos.reduce(function (suma, a) { return suma + a.total_validos; }, 0);
+  var filas = alumnos.map(function (a) {
+    var terminado = estaCompleto(a);
+    var celdas = ORDEN_PERFIL.map(function (p) {
+      var c = celda(a, p);
+      return '<td class="celda' + (c.validos >= c.meta ? ' ok' : '') + '">' +
+        c.validos + ' / ' + c.meta + '</td>';
+    }).join("");
+    return '<tr data-codigo="' + escapeHtml(a.codigo) + '" tabindex="0" role="button" ' +
+      'aria-label="Ver detalle de ' + escapeHtml(nombreCompleto(a)) + '">' +
+      '<td><div class="nombre">' + escapeHtml(nombreCompleto(a)) + '</div>' +
+      '<div class="codigo">' + escapeHtml(a.codigo) + '</div></td>' +
+      '<td class="progreso"><strong>' + a.total_validos + '</strong> / ' + a.total_meta + '</td>' +
+      celdas + '<td><span class="estado' + (terminado ? ' ok' : '') + '">' +
+      (terminado ? 'Completo' : 'En curso') + '</span></td></tr>';
+  }).join("");
+  contenido.innerHTML =
+    '<div class="resumen"><div class="dato"><span>Alumnos</span><strong>' + alumnos.length +
+    '</strong></div><div class="dato"><span>Completaron la meta</span><strong>' + completos +
+    '</strong></div><div class="dato"><span>Casos válidos</span><strong>' + validos +
+    '</strong></div></div><table class="tabla"><thead><tr><th>Alumno</th><th>Total</th>' +
+    '<th>Varón 18–39</th><th>Varón 40+</th><th>Mujer 40+</th><th>Estado</th></tr></thead>' +
+    '<tbody>' + filas + '</tbody></table>';
+  contenido.querySelectorAll("tbody tr").forEach(function (fila) {
+    function abrir() { seleccionar(fila.dataset.codigo); }
+    fila.addEventListener("click", abrir);
+    fila.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); abrir(); }
+    });
+  });
+}
+
+function mostrarAlumno(codigo) {
+  var alumno = (datos.alumnos || []).find(function (a) { return a.codigo === codigo; });
+  if (!alumno) { mostrarResumen(); return; }
+  var perfiles = ORDEN_PERFIL.map(function (p) {
+    var c = celda(alumno, p);
+    var completo = c.validos >= c.meta;
+    var porcentaje = Math.min(100, Math.round(c.validos / c.meta * 100));
+    return '<article class="perfil' + (completo ? '' : ' incompleto') + '"><span class="perfil-nom">' +
+      NOMBRES_PERFIL[p] + '</span><span class="perfil-num">' + c.validos +
+      ' <small>/ ' + c.meta + '</small></span><div class="barra"><i style="width:' + porcentaje +
+      '%"></i></div></article>';
+  }).join("");
+  contenido.innerHTML = '<div class="detalle-cab"><div><h2>' + escapeHtml(nombreCompleto(alumno)) +
+    '</h2><div class="codigo">' + escapeHtml(alumno.codigo) + '</div></div><div class="total">' +
+    alumno.total_validos + ' <small>/ ' + alumno.total_meta + ' válidos</small></div><button class="volver" type="button">Ver tablero completo</button></div>' +
+    '<div class="perfiles">' + perfiles + '</div>' +
+    (alumno.otros > 0 ? '<p class="nota">Otros perfiles: ' + alumno.otros +
+    ' (no suman a la meta).</p>' : '');
+  contenido.querySelector(".volver").addEventListener("click", function () { seleccionar(""); });
+}
+
+function seleccionar(codigo) {
+  selector.value = codigo;
+  if (codigo) {
+    history.replaceState(null, "", "?alumno=" + encodeURIComponent(codigo));
+    mostrarAlumno(codigo);
+  } else {
+    history.replaceState(null, "", location.pathname);
+    mostrarResumen();
+  }
+}
+
+fetch("avance/resumen.json?t=" + Date.now(), { cache: "no-store" })
+  .then(function (r) { if (!r.ok) throw new Error(); return r.json(); })
+  .then(function (d) {
+    datos = d;
+    datos.alumnos.sort(function (a, b) { return nombreCompleto(a).localeCompare(nombreCompleto(b), "es"); });
+    document.getElementById("bajada").textContent =
+      "Seleccioná un alumno para ver su detalle o revisá el progreso del curso completo.";
+    document.getElementById("fecha").textContent = "Actualizado el " + datos.actualizado;
+    datos.alumnos.forEach(function (a) {
+      var opcion = document.createElement("option");
+      opcion.value = a.codigo;
+      opcion.textContent = nombreCompleto(a);
+      selector.appendChild(opcion);
+    });
+    var codigo = new URLSearchParams(location.search).get("alumno");
+    seleccionar((datos.alumnos || []).some(function (a) { return a.codigo === codigo; }) ? codigo : "");
+  })
+  .catch(function () {
+    document.getElementById("bajada").textContent = "";
+    contenido.innerHTML = '<div class="error">No se pudo cargar el resumen de avances. Corré <code>generar_avance_alumnos.R</code> y subí la carpeta <code>avance/</code> actualizada.</div>';
+  });
+
+selector.addEventListener("change", function () { seleccionar(selector.value); });
+</script>
+</body>
+</html>
